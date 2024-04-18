@@ -1,0 +1,4147 @@
+/////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ai made notes from line 12 to line 1310, goto 1340 for detailed explaintions of each hook
+
+USESTATE
+--------
+
+const DeclareStateVar = `() => {
+  const [count] = useState(100)
+  return <div> State variable is {count}</div>
+}`
+
+const UpdateStateVar = `() => {
+  const [age, setAge] = useState(19)
+  const handleClick = () => setAge(age + 1)
+
+  return (
+    <div>
+      Today I am {age} Years of Age
+      <div>
+        <button onClick={handleClick}>Get older! </button>
+      </div>
+    </div>
+  )
+}`
+
+const MultipleStateVars = `() => {
+  const [age, setAge] = useState(19)
+  const [siblingsNum, setSiblingsNum] = 
+    useState(10)
+
+  const handleAge = () => setAge(age + 1)
+  const handleSiblingsNum = () => 
+      setSiblingsNum(siblingsNum + 1)
+ 
+
+  return (
+    <div>
+      <p>Today I am {age} Years of Age</p>
+      <p>I have {siblingsNum} siblings</p>
+
+      <div>
+        <button onClick={handleAge}>
+          Get older! 
+        </button>
+        <button onClick={handleSiblingsNum}>
+            More siblings! 
+        </button>
+      </div>
+    </div>
+  )
+}`
+
+const StateObject = `() => {
+  const [state, setState] = useState({ age: 19, siblingsNum: 4 })
+  const handleClick = val =>
+    setState({
+      ...state,
+      [val]: state[val] + 1
+    })
+  const { age, siblingsNum } = state
+
+  return (
+    <div>
+      <p>Today I am {age} Years of Age</p>
+      <p>I have {siblingsNum} siblings</p>
+
+      <div>
+        <button onClick={handleClick.bind(null, 'age')}>Get older!</button>
+        <button onClick={handleClick.bind(null, 'siblingsNum')}>
+          More siblings!
+        </button>
+      </div>
+    </div>
+  )
+}`
+
+const StateFromFn = `() => {
+  const [token] = useState(() => {
+    let token = window.localStorage.getItem("my-token");
+    return token || "default#-token#"
+  })
+
+  return <div>Token is {token}</div>
+}`
+
+const CounterFnSetState = `() => {
+  const [count, setCount] = useState(0);
+  return (
+    <>
+      <p>Count value is: {count}</p>
+      <button onClick={() => setCount(0)}>Reset</button>
+      <button 
+        onClick={() => setCount(prevCount => prevCount + 1)}>
+        Plus (+)
+      </button>
+      <button 
+        onClick={() => setCount(prevCount => prevCount - 1)}>
+       Minus (-)
+      </button>
+    </>
+  );
+}`
+
+export {
+  DeclareStateVar,
+  UpdateStateVar,
+  MultipleStateVars,
+  StateObject,
+  StateFromFn,
+  CounterFnSetState
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+USECONTEXT
+-----------
+
+const ContextConsumerExample = `
+const ThemeContext = React.createContext('light')
+
+const Display = () => {
+  return (
+    <ThemeContext.Consumer>
+      {theme => (
+        <div
+          style={{
+            background: theme === 'dark' ? 'black' : 'papayawhip',
+            color: theme === 'dark' ? 'white' : 'palevioletred',
+            width: '100%',
+            minHeight: '200px'
+          }}
+        >
+          {'The theme here is ' + theme}
+        </div>
+      )}
+    </ThemeContext.Consumer>
+  )
+}
+render(Display)`
+
+const useContextDisplay = `
+const ThemeContext = React.createContext('light');
+
+const Display = () => {
+ const theme = useContext(ThemeContext);
+ return <div
+        style={{
+        background: theme === 'dark' ? 'black' : 'papayawhip',
+        color: theme === 'dark' ? 'white' : 'palevioletred',
+        width: '100%',
+        minHeight: '200px'
+        }}
+    >
+        {'The theme here is ' + theme}
+    </div>
+}
+render(Display)`
+
+export { ContextConsumerExample, useContextDisplay }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+USEEFFECT
+----------
+
+const BasicEffect = `() => {
+  const [age, setAge] = useState(0)
+  const handleClick = () => setAge(age + 1)
+
+  useEffect(() => {
+    document.title = 'You are ' + age + ' years old!'
+  })
+
+  return <div>
+    <p> Look at the title of the current tab in your browser </p>
+    <button onClick={handleClick}>Update Title!! </button>
+  </div>
+}`
+
+const EffectCleanup = `() => {
+  useEffect(() => {
+    const clicked = () => console.log('window clicked')
+    window.addEventListener('click', clicked)
+
+    // return a clean-up function
+    return () => {
+      window.removeEventListener('click', clicked)
+    }
+  }, [])
+
+  return <div>
+    When you click the window you'll 
+    find a message logged to the console
+  </div>
+}`
+
+const MultipleEffects = `() => {
+  // 🍟
+  useEffect(() => {
+    const clicked = () => console.log('window clicked')
+    window.addEventListener('click', clicked)
+
+    return () => {
+      window.removeEventListener('click', clicked)
+    }
+  }, [])
+
+  // 🍟 another useEffect hook 
+  useEffect(() => {
+    console.log("another useEffect call");
+  })
+
+  return <div>
+    Check your console logs
+  </div>
+}`
+
+const ArrayDep = `() => {
+  const [randomNumber, setRandomNumber] = useState(0)
+  const [effectLogs, setEffectLogs] = useState([])
+
+  useEffect(
+    () => {
+      setEffectLogs(prevEffectLogs => [...prevEffectLogs, 'effect fn has been invoked'])
+    },
+    [randomNumber]
+  )
+
+  return (
+    <div>
+      <h1>{randomNumber}</h1>
+      <button
+        onClick={() => {
+          setRandomNumber(Math.random())
+        }}
+      >
+        Generate random number!
+      </button>
+      <div>
+        {effectLogs.map((effect, index) => (
+          <div key={index}>{'🍔'.repeat(index) + effect}</div>
+        ))}
+      </div>
+    </div>
+  )
+}`
+
+const ArrayDepMount = `() => {
+  const [randomNumber, setRandomNumber] = useState(0)
+  const [effectLogs, setEffectLogs] = useState([])
+
+  useEffect(
+    () => {
+      setEffectLogs(prevEffectLogs => [...prevEffectLogs, 'effect fn has been invoked'])
+    },
+    []
+  )
+
+  return (
+    <div>
+      <h1>{randomNumber}</h1>
+      <button
+        onClick={() => {
+          setRandomNumber(Math.random())
+        }}
+      >
+        Generate random number!
+      </button>
+      <div>
+        {effectLogs.map((effect, index) => (
+          <div key={index}>{'🍔'.repeat(index) + effect}</div>
+        ))}
+      </div>
+    </div>
+  )
+}`
+
+export { BasicEffect, EffectCleanup, MultipleEffects, ArrayDep, ArrayDepMount }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+USECALLBACK
+------------
+
+const Starter = `
+const App = () => {
+    const [age, setAge] = useState(99)
+    const handleClick = () => setAge(age + 1)
+    const someValue = "someValue"
+    const doSomething = () => {
+      return someValue
+    }
+  
+    return (
+      <div>
+        <Age age={age} handleClick={handleClick}/>
+        <Instructions doSomething={doSomething} />
+      </div>
+    )
+}
+
+const Age = ({ age, handleClick }) => {
+  return (
+    <div>
+      <div style={{ border: '2px', background: "papayawhip", padding: "1rem" }}>
+        Today I am {age} Years of Age
+      </div>
+      <pre> - click the button below 👇 </pre>
+      <button onClick={handleClick}>Get older! </button>
+    </div>
+  )
+}
+
+const Instructions = memo((props) => {
+  const colors = ['blue', 'red', 'yellow'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  return (
+    <div style={{ background: 'black', color: randomColor, padding: "1rem" }}>
+      <p>Follow the instructions above as closely as possible</p>
+    </div>
+  )
+})
+
+render (
+  <App />
+)
+`.trim()
+
+const ReferencedFn = `
+const App = () => {
+  const [age, setAge] = useState(99)
+  const handleClick = () => setAge(age + 1)
+  const someValue = "someValue"
+  const doSomething = useCallback(() => {
+    return someValue
+  }, [someValue])
+
+  return (
+    <div>
+      <Age age={age} handleClick={handleClick} />
+      <Instructions doSomething={doSomething} />
+    </div>
+  )
+}
+
+const Age = ({ age, handleClick }) => {
+  return (
+    <div>
+      <div style={{ border: '2px', background: "papayawhip", padding: "1rem" }}>
+        Today I am {age} Years of Age
+      </div>
+      <pre> - click the button below 👇 </pre>
+      <button onClick={handleClick}>Get older! </button>
+    </div>
+  )
+}
+
+const Instructions = memo((props) => {
+  const colors = ['blue', 'red', 'yellow'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  return (
+    <div style={{ background: 'black', color: randomColor, padding: "1rem" }}>
+      <p>Follow the instructions above as closely as possible</p>
+    </div>
+  )
+})
+
+render(<App />)
+`.trim()
+
+const InlineFn = `
+const App = () => {
+  const [age, setAge] = useState(99)
+  const handleClick = () => setAge(age + 1)
+  const someValue = "someValue"
+
+  return (
+    <div>
+      <Age age={age} handleClick={handleClick} />
+      <Instructions doSomething={useCallback(() => {
+        return someValue
+      }, [someValue])} />
+    </div>
+  )
+}
+
+const Age = ({ age, handleClick }) => {
+  return (
+    <div>
+      <div style={{ border: '2px', background: "papayawhip", padding: "1rem" }}>
+        Today I am {age} Years of Age
+      </div>
+      <pre> - click the button below 👇 </pre>
+      <button onClick={handleClick}>Get older! </button>
+    </div>
+  )
+}
+
+const Instructions = memo((props) => {
+  const colors = ['blue', 'red', 'yellow'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  return (
+    <div style={{ background: 'black', color: randomColor, padding: "1rem" }}>
+      <p>Follow the instructions above as closely as possible</p>
+    </div>
+  )
+})
+
+render(<App />)
+`.trim()
+
+export { Starter, ReferencedFn, InlineFn }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+USELAYOUTEFFECT 
+----------------
+
+const ArrayDep = `() => {
+    const [randomNumber, setRandomNumber] = useState(0)
+    const [effectLogs, setEffectLogs] = useState([])
+  
+    useLayoutEffect(
+      () => {
+        setEffectLogs(prevEffectLogs => [...prevEffectLogs, 'effect fn has been invoked'])
+      },
+      [randomNumber]
+    )
+  
+    return (
+      <div>
+        <h1>{randomNumber}</h1>
+        <button
+          onClick={() => {
+            setRandomNumber(Math.random())
+          }}
+        >
+          Generate random number!
+        </button>
+        <div>
+          {effectLogs.map((effect, index) => (
+            <div key={index}>{'🍔'.repeat(index) + effect}</div>
+          ))}
+        </div>
+      </div>
+    )
+  }`
+
+export { ArrayDep }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+USEMEMO 
+---------
+
+const Starter = `
+const App = () => {
+    const [age, setAge] = useState(99)
+    const handleClick = () => setAge(age + 1)
+    const someValue = { value: "someValue" }
+    const doSomething = () => {
+      return someValue
+    }
+  
+    return (
+      <div>
+        <Age age={age} handleClick={handleClick}/>
+        <Instructions doSomething={doSomething} />
+      </div>
+    )
+}
+
+const Age = ({ age, handleClick }) => {
+  return (
+    <div>
+      <div style={{ border: '2px', background: "papayawhip", padding: "1rem" }}>
+        Today I am {age} Years of Age
+      </div>
+      <pre> - click the button below 👇 </pre>
+      <button onClick={handleClick}>Get older! </button>
+    </div>
+  )
+}
+
+const Instructions = memo((props) => {
+  return (
+    <div style={{ background: 'black', color: 'yellow', padding: "1rem" }}>
+      <p>Follow the instructions above as closely as possible</p>
+    </div>
+  )
+})
+
+render (
+  <App />
+)
+`.trim();
+
+const Basic = `
+const App = () => {
+    const [age, setAge] = useState(99)
+    const handleClick = () => setAge(age + 1)
+    const someValue = useMemo(() => ({ value: "someValue" }))
+    const doSomething = () => {
+      return someValue
+    }
+  
+    return (
+      <div>
+        <Age age={age} handleClick={handleClick}/>
+        <Instructions doSomething={doSomething} />
+      </div>
+    )
+}
+
+const Age = ({ age, handleClick }) => {
+  return (
+    <div>
+      <div style={{ border: '2px', background: "papayawhip", padding: "1rem" }}>
+        Today I am {age} Years of Age
+      </div>
+      <pre> - click the button below 👇 </pre>
+      <button onClick={handleClick}>Get older! </button>
+    </div>
+  )
+}
+
+const Instructions = memo((props) => {
+  return (
+    <div style={{ background: 'black', color: 'yellow', padding: "1rem" }}>
+      <p>Follow the instructions above as closely as possible</p>
+    </div>
+  )
+})
+
+render (<App />)
+`.trim();
+
+export { Starter, Basic };
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+USEREDUCER 
+-----------
+
+const BasicExample = `const initialState = { width: 15 }
+const reducer = (state, action) => {
+  switch (action) {
+    case 'plus':
+      return { width: state.width + 15 }
+    case 'minus':
+      return { width: Math.max(state.width - 15, 2) }
+    default:
+      throw new Error("what's going on?" )
+  }
+}
+
+const Bar = () => {
+  const [state, dispatch] = useReducer(reducer, initialState)
+  return <>
+    <div style={{ background: 'teal', height: '30px', width: state.width }}></div>
+    <div style={{marginTop: '3rem'}}>
+        <button onClick={() => dispatch('plus')}>Increase bar size</button>
+        <button onClick={() => dispatch('minus')}>Decrease bar size</button>
+    </div>
+    </>
+}
+render(Bar)`
+
+const InitLazy = `
+const initializeState = () => ({
+  width: 100
+})
+// ✅ note how the value returned from the fn above overrides initialState below: 
+const initialState = { width: 15 }
+const reducer = (state, action) => {
+  switch (action) {
+    case 'plus':
+      return { width: state.width + 15 }
+    case 'minus':
+      return { width: Math.max(state.width - 15, 2) }
+    default:
+      throw new Error("what's going on?" )
+  }
+}
+
+const Bar = () => {
+  const [state, dispatch] = useReducer(reducer, initialState, initializeState)
+  return <>
+    <div style={{ background: 'teal', height: '30px', width: state.width }}></div>
+    <div style={{marginTop: '3rem'}}>
+        <button onClick={() => dispatch('plus')}>Increase bar size</button>
+        <button onClick={() => dispatch('minus')}>Decrease bar size</button>
+    </div>
+    </>
+}
+render(Bar)`
+
+const ImitateSetState = `
+const initialState = { width: 15 }
+const reducer = (state, newState) => ({
+  ...state,
+  width: newState.width
+})
+
+const Bar = () => {
+  const [state, setState] = useReducer(reducer, initialState)
+  return <>
+    <div style={{ background: 'teal', height: '30px', width: state.width }}></div>
+    <div style={{marginTop: '3rem'}}>
+        <button onClick={() => setState({width: 100})}>Increase bar size</button>
+        <button onClick={() => setState({width: 3})}>Decrease bar size</button>
+    </div>
+    </>
+}
+render(Bar)`
+
+export { BasicExample, InitLazy, ImitateSetState }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+USEREF
+--------
+
+import React from "react";
+
+const AccessDOM = `() => {
+  const textAreaEl = useRef(null);
+  const handleBtnClick = () => {
+    textAreaEl.current.value =
+      "The is the story of your life. You are an human being, and you're on a website about React Hooks";
+    textAreaEl.current.focus();
+  };
+  return (
+    <section style={{ textAlign: "center" }}>
+      <div>
+        <button onClick={handleBtnClick}>Focus and Populate Text Field</button>
+      </div>
+      <label
+        htmlFor="story"
+        style={{
+          display: "block",
+          background: "olive",
+          margin: "1em",
+          padding: "1em"
+        }}
+      >
+        The input box below will be focused and populated with some text
+        (imperatively) upon clicking the button above.
+      </label>
+      <textarea ref={textAreaEl} id="story" rows="5" cols="33" />
+    </section>
+  );
+};`;
+
+
+const HoldStringVal = `() => {
+    const textAreaEl = useRef(null);
+    const stringVal = useRef("This is a string saved via the ref object --- ")
+    const handleBtnClick = () => {
+      textAreaEl.current.value =
+      stringVal.current + "The is the story of your life. You are an human being, and you're on a website about React Hooks";
+      textAreaEl.current.focus();
+    };
+    return (
+      <section style={{ textAlign: "center" }}>
+        <div>
+          <button onClick={handleBtnClick}>Focus and Populate Text Field</button>
+        </div>
+        <label
+          htmlFor="story"
+          style={{
+            display: "block",
+            background: "olive",
+            margin: "1em",
+            padding: "1em"
+          }}
+        >
+          Prepare to see text from the ref object here. Click button above.
+        </label>
+        <textarea ref={textAreaEl} id="story" rows="5" cols="33" />
+      </section>
+    );
+  };`;
+export { AccessDOM, HoldStringVal };
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FETCHDATA
+----------
+
+const fetchOnMount = `() => {
+  const stringifyData = data => JSON.stringify(data, null, 2)
+  const initialData = stringifyData({ data: null })
+  const [data, setData] = useState(initialData)
+
+  useEffect(() => {
+    const fetchData = () => {
+      const uri = 'https://randomuser.me/api/'
+      fetch(uri)
+        .then(res => res.json())
+        .then(({ results }) => {
+          const { name, gender, dob } = results[0]
+          const dataVal = stringifyData({
+            ...name,
+            gender,
+            age: dob.age
+          })
+          setData(dataVal)
+        })
+    }
+
+    fetchData()
+  }, [])
+
+  return (
+    <>
+      <h4> 👇User Data 👇</h4>
+      <section>
+        <pre>{data}</pre>
+      </section>
+    </>
+  )
+}`
+
+const fetchOnUserEvent = `() => {
+  const stringifyData = data => JSON.stringify(data, null, 2)
+  const initialData = stringifyData({ data: null })
+  const [data, setData] = useState(initialData)
+
+  const [gender, setGender] = useState('female')
+
+  useEffect(() => {
+    const fetchData = () => {
+      const uri = 'https://randomuser.me/api/?gender=' + gender
+      fetch(uri)
+        .then(res => res.json())
+        .then(({ results }) => {
+          const { name, gender, dob } = results[0]
+          const dataVal = stringifyData({
+            ...name,
+            gender,
+            age: dob.age
+          })
+          setData(dataVal)
+        })
+    }
+
+    fetchData()
+  }, [gender])
+
+  return (
+    <>
+      <p>Click the buttons below to fetch data</p>
+      <button
+        onClick={() => setGender('male')}
+        style={{ outline: gender === 'male' ? '1px solid' : 0 }}
+      >
+        Fetch Male User
+      </button>
+      <button
+        onClick={() => setGender('female')}
+        style={{ outline: gender === 'female' ? '1px solid' : 0 }}
+      >
+        Fetch Female User
+      </button>
+
+      <section>
+        <pre>{data}</pre>
+      </section>
+    </>
+  )
+}`
+
+const fetchOnUserEventAndLoading = `() => {
+  const stringifyData = data => JSON.stringify(data, null, 2)
+  const initialData = stringifyData({ data: null })
+  const loadingData = stringifyData({ data: 'loading...' })
+  const [data, setData] = useState(initialData)
+
+  const [gender, setGender] = useState('female')
+  const [loading, setLoading] = useState(false)
+
+  useEffect(
+    () => {
+      const fetchData = () => {
+        setLoading(true)
+        const uri = 'https://randomuser.me/api/?gender=' + gender
+        fetch(uri)
+          .then(res => res.json())
+          .then(({ results }) => {
+            setLoading(false)
+            const { name, gender, dob } = results[0]
+            const dataVal = stringifyData({
+              ...name,
+              gender,
+              age: dob.age
+            })
+            setData(dataVal)
+          })
+      }
+
+      fetchData()
+    },
+    [gender]
+  )
+
+  return (
+    <>
+      <p>Click the buttons below to fetch data</p>
+      <button
+        onClick={() => setGender('male')}
+        style={{ outline: gender === 'male' ? '1px solid' : 0 }}
+      >
+        Fetch Male User
+      </button>
+      <button
+        onClick={() => setGender('female')}
+        style={{ outline: gender === 'female' ? '1px solid' : 0 }}
+      >
+        Fetch Female User
+      </button>
+
+      <section>
+        {loading ? <pre>{loadingData}</pre> : <pre>{data}</pre>}
+      </section>
+    </>
+  )
+}`
+
+export { fetchOnMount, fetchOnUserEvent, fetchOnUserEventAndLoading }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+let's delve into each React Hook with detailed explanations and full syntax:
+
+1. useState
+
+    Syntax:
+
+    javascript
+
+    const [state, setState] = useState(initialState);
+
+    Explanation:
+    useState is used to add state management to functional components. It returns an array with two elements: the current state value (state) and a function (setState) to update it. You provide an initial state as an argument.
+
+    Use Cases:
+        Managing form input values.
+        Toggling UI elements (e.g., showing/hiding a modal).
+        Storing and updating component-specific data.
+
+2. useEffect
+
+    Syntax:
+
+    javascript
+
+    useEffect(() => {
+      // Effect code
+    }, [dependencies]);
+
+    Explanation:
+    useEffect is used for handling side effects in functional components. It accepts two arguments: a function (the effect) and an array of dependencies. The effect runs after the component renders, and it may depend on values specified in the dependencies array.
+
+    Use Cases:
+        Data fetching and API calls.
+        Manipulating the DOM after rendering.
+        Setting up and cleaning up subscriptions.
+
+3. useContext
+
+    Syntax:
+
+    javascript
+
+    const contextValue = useContext(MyContext);
+
+    Explanation:
+    useContext allows a component to access values from a context provider higher up in the component tree. It simplifies sharing data between components without the need for prop drilling.
+
+    Use Cases:
+        Accessing theme settings.
+        Managing authentication state.
+        Language or localization settings.
+
+4. useReducer
+
+    Syntax:
+
+    javascript
+
+    const [state, dispatch] = useReducer(reducer, initialArg, init);
+
+    Explanation:
+    useReducer is an alternative to useState for managing complex state logic. It takes a reducer function (reducer), an initial state (initialArg), and an optional initialization function (init).
+
+    Use Cases:
+        Managing state with complex interactions.
+        Implementing undo/redo functionality.
+        Handling state transitions in a more controlled manner.
+
+5. useRef
+
+    Syntax:
+
+    javascript
+
+    const refContainer = useRef(initialValue);
+
+    Explanation:
+    useRef creates mutable ref objects that persist across renders. It's commonly used to access DOM elements, manage focus, or cache values without causing re-renders.
+
+    Use Cases:
+        Accessing and interacting with DOM elements.
+        Managing focus within a component.
+        Caching values for comparison between renders.
+
+6. useMemo
+
+    Syntax:
+
+    javascript
+
+    const memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);
+
+    Explanation:
+    useMemo memoizes a computed value to optimize expensive calculations. The function provided as the first argument is only re-run when any of the dependencies (the second argument) change.
+
+    Use Cases:
+        Optimizing performance by avoiding unnecessary computations.
+        Memoizing complex data transformations.
+
+7. useCallback
+
+    Syntax:
+
+    javascript
+
+    const memoizedCallback = useCallback(() => { }, [dependencies]);
+
+    Explanation:
+    useCallback memoizes callback functions. It's helpful when passing callbacks to child components, preventing unnecessary re-creations of the callback function on re-renders. Use dependencies to specify when the callback should change.
+
+    Use Cases:
+        Preventing unnecessary re-renders of child components.
+        Optimizing performance when passing functions as props.
+
+8. useEffect Cleanup
+
+    Syntax:
+
+    javascript
+
+    useEffect(() => {
+      // Effect code
+      return () => {
+        // Cleanup code
+      };
+    }, [dependencies]);
+
+    Explanation:
+    useEffect cleanup allows you to perform cleanup tasks when a component unmounts or when certain dependencies change. The cleanup function returned from the effect is executed before the component is unmounted or re-runs.
+
+    Use Cases:
+        Unsubscribing from event listeners.
+        Canceling network requests.
+        Cleaning up timers or intervals.
+
+9. Custom Hooks
+
+    Syntax:
+    Custom hooks are user-defined functions following the naming convention useSomething.
+
+    Explanation:
+    Custom hooks allow you to encapsulate and reuse stateful logic across multiple components. They are created by composing existing hooks or logic into a custom function.
+
+    Use Cases:
+        Abstracting complex logic into reusable functions.
+        Promoting code reuse and maintainability.
+        Sharing stateful logic across different components.
+
+Understanding these React Hooks is crucial for building powerful and maintainable functional components in React applications. Each hook serves a specific purpose and can greatly simplify state management and side effect handling in your components.
+
+---------------------------------------------------------------------------------------------------------------------------------
+Here are code examples for each of the React Hooks:
+----------------------------------------------------------------------------------------------------------------
+1. useState
+
+jsx
+
+import React, { useState } from 'react';
+
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  return (
+    <div>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount(count + 1)}>Increment</button>
+    </div>
+  );
+}
+
+----------------------------------------------------------------------------------------------
+2. useEffect
+
+jsx
+
+import React, { useState, useEffect } from 'react';
+
+function DataFetching() {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    fetch('https://api.example.com/data')
+      .then(response => response.json())
+      .then(data => setData(data));
+  }, []);
+
+  return (
+    <div>
+      <ul>
+        {data.map(item => (
+          <li key={item.id}>{item.name}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+---------------------------------------------------------------------------------------------------
+3. useContext
+
+jsx
+
+import React, { useContext } from 'react';
+const ThemeContext = React.createContext();
+
+function App() {
+  return (
+    <ThemeContext.Provider value="dark">
+      <Navbar />
+    </ThemeContext.Provider>
+  );
+}
+
+function Navbar() {
+  const theme = useContext(ThemeContext);
+
+  return <div>Current Theme: {theme}</div>;
+}
+
+-------------------------------------------------------------------------------------------------------------
+4. useReducer
+
+jsx
+
+import React, { useReducer } from 'react';
+
+const initialState = { count: 0 };
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'increment':
+      return { count: state.count + 1 };
+    case 'decrement':
+      return { count: state.count - 1 };
+    default:
+      return state;
+  }
+}
+
+function Counter() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  return (
+    <div>
+      <p>Count: {state.count}</p>
+      <button onClick={() => dispatch({ type: 'increment' })}>Increment</button>
+      <button onClick={() => dispatch({ type: 'decrement' })}>Decrement</button>
+    </div>
+  );
+}
+
+------------------------------------------------------------------------------------------------------------------------------------
+5. useRef
+
+jsx
+
+import React, { useRef } from 'react';
+
+function FocusInput() {
+  const inputRef = useRef(null);
+
+  const handleClick = () => {
+    inputRef.current.focus();
+  };
+
+  return (
+    <div>
+      <input ref={inputRef} type="text" />
+      <button onClick={handleClick}>Focus Input</button>
+    </div>
+  );
+}
+
+----------------------------------------------------------------------------------------------------------------------------------
+6. useMemo
+
+jsx
+
+import React, { useState, useMemo } from 'react';
+
+function ExpensiveComponent({ data }) {
+  const expensiveCalculation = useMemo(() => {
+    // Perform expensive calculation based on 'data'
+    return data * 2;
+  }, [data]);
+
+  return <div>Result: {expensiveCalculation}</div>;
+}
+
+----------------------------------------------------------------------------------------------------------------------
+7. useCallback
+
+jsx
+
+import React, { useState, useCallback } from 'react';
+
+function ParentComponent() {
+  const [count, setCount] = useState(0);
+
+  const increment = useCallback(() => {
+    setCount(count + 1);
+  }, [count]);
+
+  return (
+    <div>
+      <ChildComponent increment={increment} />
+    </div>
+  );
+}
+
+function ChildComponent({ increment }) {
+  return (
+    <div>
+      <button onClick={increment}>Increment Count</button>
+    </div>
+  );
+}
+
+--------------------------------------------------------------------------------------------------------------------------
+8. useEffect Cleanup
+
+jsx
+
+import React, { useState, useEffect } from 'react';
+
+function Timer() {
+  const [time, setTime] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(time + 1);
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [time]);
+
+  return <div>Time: {time} seconds</div>;
+}
+
+----------------------------------------------------------------------------------------------------------------------
+9. Custom Hooks
+
+jsx
+
+// useLocalStorage.js
+import { useState } from 'react';
+
+export function useLocalStorage(key, initialValue) {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.error(error);
+      return initialValue;
+    }
+  });
+
+  const setValue = value => {
+    try {
+      setStoredValue(value);
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return [storedValue, setValue];
+}
+
+// Usage
+import React from 'react';
+import { useLocalStorage } from './useLocalStorage';
+
+function App() {
+  const [name, setName] = useLocalStorage('name', '');
+
+  return (
+    <div>
+      <input
+        type="text"
+        value={name}
+        onChange={e => setName(e.target.value)}
+        placeholder="Enter your name"
+      />
+      <p>Hello, {name}!</p>
+    </div>
+  );
+}
+
+------------------------------------------------------------------------------------------------------------
+ Rules of Hooks
+
+Make sure to follow the rules of hooks:
+
+    Hooks should only be used at the top level of a function component or another custom hook.
+    Don't call hooks inside loops, conditions, or nested functions.
+    Hooks should have the same order on every render.
+
+These code examples illustrate the use of various React Hooks in different scenarios, showcasing their versatility in managing state, handling side effects, and improving the overall structure and logic of React components.
+User
+
+----------------------------------------------------------------------------------------------------------------------
+ let's go through the step-by-step workings of each of the code examples for React Hooks:
+
+1. useState
+
+    useState initializes the count state variable to 0.
+    The count state is displayed in the JSX.
+    When the "Increment" button is clicked, setCount is called with the updated count value, causing a re-render with the new count displayed.
+
+2. useEffect
+
+    useState initializes the data state variable as an empty array.
+    useEffect runs after the initial render and fetches data from an API endpoint.
+    The fetched data is stored in the data state variable, triggering a re-render.
+    The fetched data is then displayed in an unordered list.
+
+3. useContext
+
+    A ThemeContext is created using React.createContext().
+    In the App component, the ThemeContext.Provider is used to provide a theme value of "dark" to its child components.
+    The Navbar component uses useContext to access the theme value and displays it.
+
+4. useReducer
+
+    useReducer initializes the state with { count: 0 } and specifies a reducer function.
+    The reducer function updates the state based on action types.
+    The Counter component displays the count value and provides buttons to increment and decrement it.
+    Clicking the buttons dispatches actions that modify the state using the reducer.
+
+5. useRef
+
+    useRef creates an inputRef with an initial value of null.
+    Clicking the "Focus Input" button calls inputRef.current.focus(), focusing on the input element.
+
+6. useMemo
+
+    useMemo calculates an expensive value based on the data prop.
+    The ExpensiveComponent renders this value.
+    If data changes, useMemo recalculates the value.
+
+7. useCallback
+
+    useState initializes the count state variable to 0.
+    useCallback memoizes the increment function.
+    The ParentComponent renders a ChildComponent and passes the memoized increment function as a prop.
+    Clicking the button in the ChildComponent calls the increment function.
+
+8. useEffect Cleanup
+
+    useState initializes the time state variable to 0.
+    useEffect sets up an interval that increments time every second.
+    A cleanup function is returned from useEffect to clear the interval when the component unmounts.
+
+9. Custom Hooks
+
+    The useLocalStorage custom hook manages data in local storage.
+    It initializes storedValue with the value from local storage or an initial value.
+    It provides a setValue function to update the stored value and store it in local storage.
+    The App component uses useLocalStorage to store and display a user's name in local storage.
+
+These examples demonstrate the use of React Hooks for managing state, effects, context, and custom logic in functional components, improving code readability and maintainability.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// self created notes
+
+import React from "react"; // import this in all funct components
+import { useDeferredValue } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  useMemo,
+  useCallback,
+  useRef,
+  useReducer,
+  useLayoutEffect,
+  useTransition
+} from "react";
+import Axios from "axios";
+import { useQuery } from "react-query";
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+
+------------------------------------------------------------------------------------------------------------
+ Rules of Hooks
+
+Make sure to follow the rules of hooks:
+
+    Hooks should only be used at the top level of a function component or another custom hook.
+    Don't call hooks inside loops, conditions, or nested functions.
+    Hooks should have the same order on every render.
+
+These code examples illustrate the use of various React Hooks in different scenarios, showcasing their versatility in managing state, handling side effects, and improving the overall structure and logic of React components.
+User
+
+----------------------------------------------------------------------------------------------------------------------
+ let's go through the step-by-step workings of each of the code examples for React Hooks:
+
+1. useState
+
+    useState initializes the count state variable to 0.
+    The count state is displayed in the JSX.
+    When the "Increment" button is clicked, setCount is called with the updated count value, causing a re-render with the new count displayed.
+
+2. useEffect
+
+    useState initializes the data state variable as an empty array.
+    useEffect runs after the initial render and fetches data from an API endpoint.
+    The fetched data is stored in the data state variable, triggering a re-render.
+    The fetched data is then displayed in an unordered list.
+    (  useLayoutEffect same as useeffect but synchronous while useeffect is async)
+
+3. useContext
+
+    A ThemeContext is created using React.createContext().
+    In the App component, the ThemeContext.Provider is used to provide a theme value of "dark" to its child components.
+    The Navbar component uses useContext to access the theme value and displays it.
+
+4. useReducer
+
+    useReducer initializes the state with { count: 0 } and specifies a reducer function.
+    The reducer function updates the state based on action types.
+    The Counter component displays the count value and provides buttons to increment and decrement it.
+    Clicking the buttons dispatches actions that modify the state using the reducer.
+
+5. useRef
+
+    useRef creates an inputRef with an initial value of null.
+    Clicking the "Focus Input" button calls inputRef.current.focus(), focusing on the input element.
+
+6. useMemo
+
+    useMemo calculates an expensive value based on the data prop.
+    The ExpensiveComponent renders this value.
+    If data changes, useMemo recalculates the value.
+
+7. useCallback
+
+    useState initializes the count state variable to 0.
+    useCallback memoizes the increment function.
+    The ParentComponent renders a ChildComponent and passes the memoized increment function as a prop.
+    Clicking the button in the ChildComponent calls the increment function.
+
+8. Custom Hooks
+
+    The useLocalStorage custom hook manages data in local storage.
+    It initializes storedValue with the value from local storage or an initial value.
+    It provides a setValue function to update the stored value and store it in local storage.
+    The App component uses useLocalStorage to store and display a user's name in local storage.
+
+9.  useTransition
+
+     usetransit hook meant to speed up application n make them feel responsive to user
+     even if some long process going on in background by seperating different renders based on 
+     user priority under transition block
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ */
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//---------------------------------------------------------------------------------------
+
+//                             USEEFFECT HOOK
+//                            ----------------
+
+// const OtherStateHooks = () => {
+// // urll='https://jsonplaceholder.typicode.com/'
+
+// const [dta,setDta]=useState("posts")
+
+//   return (
+//     <div>
+//    use-effect <br/>
+//    <button onClick={()=>{setDta("posts")}}>posts</button>
+//    <button onClick={()=>{setDta("users")}}>users</button>
+//    <button onClick={()=>{setDta("comments")}}>comments</button><br/>
+//    {dta}
+
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+// // this program is changing rendered data on window by using button onclick to setstate of dta state variable
+
+//-------------------------------------------------------------------------------------------------------------------------
+
+// now lets use useeffect hook with json placeholder fetch operation
+
+// useeffect basically mean whenever this comonent changes, there must be some kind of side effect happening
+
+// import React from "react"; // import this in all funct components
+// import {
+//   useState,
+//   useEffect,
+//   useContext,
+//   useMemo,
+//   useCallback,
+//   useRef,
+//   useReducer,
+//   useLayoutEffect
+// } from "react";
+
+// const OtherStateHooks = () => {
+//   // urll='https://jsonplaceholder.typicode.com/'
+
+//   const [dta, setDta] = useState("posts");
+
+//   console.log("rendered ",dta);
+
+//   useEffect(() => {
+//     console.log("rendered n mounted ", dta );
+
+//     return ()=>{console.log("cleanup/unmount")}
+//   },[dta]); // [] empty means run only when page loads, [dta] means run only when dta value changes, no[] means run this on every render
+// // now when dta changes, means we go frm one page to other, its rendered n mounted
+// // but clicking on it again only renders it by onclick, it only mounts when page switched n useeffect invoked
+//   return (
+//     <div>
+//       use-effect <br />
+
+//       <button onClick={() => { setDta("posts") }} > posts </button>
+//       <button onClick={() => { setDta("users")}} > users </button>
+//       <button onClick={() => { setDta("comments")}} >comments</button>
+//       <br />
+//       {dta}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// now lets use useeffect to call fetch api when data changes n print fetched data on screen
+
+// const OtherStateHooks = () => {
+//   // urll='https://jsonplaceholder.typicode.com/'
+
+//   const [dta, setDta] = useState();
+//   const [jsnrtn,  setJsnrtn] = useState();
+
+//   console.log(dta);
+
+//   useEffect(() => {
+//     fetch("https://jsonplaceholder.typicode.com/" + dta) //u can use backtick $ template literal, we are basically appending the string to our state name to bring in data frm the api and storing it in jsnrtn state as array of objects
+//       .then((response) => response.json())
+//       .then((json) => {
+//         setJsnrtn(json);
+//         console.log(jsnrtn);
+//       });
+//   }, [dta]);
+//   return (
+//     <div>
+//       use-effect <br />
+
+//       <button onClick={() => { setDta("posts") }} > posts </button>
+//      <button onClick={() => { setDta("users")}} > users </button>
+//      <button onClick={() => { setDta("comments")}} >comments</button>
+//       <br />
+//       {/*    now  jsnrtn state as array of objects  with postid/id/email/name etc
+//        key im "users", email/companey etc in posts and ... in comments,
+//        basically we get 10 posts. 100 users and 500 comments as objects
+//        and with different keys frm this api, id is common among all 3 object categories post/user/comment
+//         so lets print jsnrtn[0].id first id fron array of post/user/commnt
+//         array of object  */}
+//       {/* {jsnrtn[5].id} */}
+// {/* now lets use array.map to loop through the array and {JSON.stringify(arr)} operation to display our object as string on the window */}
+//    {jsnrtn.map((arr)=>{ return <p>  {JSON.stringify(arr)}  </p>})}
+// if jsnrtn not defined error, comment out above jsx once and uncomment it when fetch data recived in jsnrnt state in console.log
+//     </div>
+// //  now all the posts/user/comments objects displayed on the window as string
+//  );
+// };
+// export default OtherStateHooks;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// lets render changing window width
+
+// const OtherStateHooks = () => {
+//   const [dta, setDta] = useState(window.innerWidth);
+
+//   console.log(dta);
+
+//   useEffect(() => {
+//     // setDta(window.innerWidth) // doing it like thisdoes change dta value but data only renders on screen on refresh
+//     // so lets add an event listener on window for resize so whenever the window size changes, the event listener will track the event and update dta value
+//     // add event listener takes  in first argument as event and a callback function, we use arrow fun
+//     // window.addevntlstnr means addeventlistener will listen for events on window
+//     // (more on addeventlistener in notes)
+//     window.addEventListener("keypress", (evnttt) => console.log(evnttt.key));
+//     // now any press after u click on screen will e console.logged(just for understanding event listener not in state here just example)
+//     window.addEventListener("resize", () => {
+//       setDta(window.innerWidth);
+//     });
+
+//     return ()=>{
+//       console.log("cleanup/unmount")
+//       // return for cleanup/unmount, used for cleanup operations like cleartimeout/clearinterval/removeEventListener etc
+//                 // otherwise it will always be hooked up and slow down our app, this unmounting basically means perform this operation atlast when component unmounted
+//     // removeeventlistner also takes event and a callack function
+//     window.removeEventListener("resize", () => { setDta(window.innerWidth) });
+//     // now whenever its unmounted, this callback  () => { setDta(window.innerWidth) }
+//     // will be performed and eventlistener will be removed frm our program by removeEventListener
+//     }
+
+//   }, [dta]);
+//   return (
+//     <div>
+//       use-effect <br />
+//       <br />
+//       <h1>{dta}</h1>
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+
+//   // best way to think useeffect is that whenever any changes occor like ur state change or
+//   //  component change or mount unmount or ur prop changes or anything else, u wanna perform
+//   // the operation inside the useeffect block, it can track any operation in [xxxx] or
+//   // just run once on page load on empty [] or runs on each new render on no []
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//                       USELAYOUT EFFECT
+//                      ------------------
+// its exactly same as useeffect
+// only difference being while useeffect is asynchronous, uselayout effect is synchronous
+// u should always try to use useeffect first preferrably and use uleft only when u need to avoid some kind of flash of changing ui on screen that u wanna avoid
+/*
+  useEffect(() => {
+xxxxxxxxx
+  }, [dep1,2,3...]);
+
+    useLayoutEffect(() => {
+xxxxxxxxx
+  }, [dep1,2,3...]);
+*/
+
+// UseLayoutEffect:
+
+// UseLayoutEffect is a React hook that is similar to useEffect, but it is specifically designed to handle layout-related tasks, such as measuring the size of elements or adjusting the position of elements based on the size of the viewport. It is called after every render by default, but it can also be configured to be called only when the component's layout has changed.
+
+// Explanation:
+
+// UseLayoutEffect is a hook that allows developers to run some code after the component has rendered, similar to useEffect. However, useLayoutEffect is triggered differently than useEffect. UseEffect is triggered after all DOM mutations, while useLayoutEffect is triggered after the layout of the component has been calculated. This means that useLayoutEffect can be used to perform layout-related tasks, such as measuring the size of elements or adjusting the position of elements based on the size of the viewport.
+
+// One basic example:
+
+/*
+useLayoutEffect vs. useEffect
+useLayoutEffect and useEffect are both used for handling side effects in React components, but they have a subtle difference in terms of when they are executed in the component's lifecycle.
+
+useEffect:
+    Asynchronous: useEffect is asynchronous. It schedules the provided function to run after the browser has painted (rendered) the screen. It doesn't block the browser's rendering process.
+    Use Cases: It's typically used for side effects that don't need to block the browser's rendering, such as data fetching, setting up subscriptions, or running timers.
+
+useLayoutEffect:
+    Synchronous: useLayoutEffect is synchronous. It schedules the provided function to run immediately after the DOM has been updated but before the browser repaints. This means it can block the rendering process.
+    Use Cases: It's used when you need to perform DOM measurements or mutations that should be reflected in the next layout or paint. It's less common than useEffect and should be used with caution because blocking the rendering process can lead to performance issues
+
+Difference in Use Cases:
+    Use useEffect when you need to perform non-blocking tasks, like data fetching or setting up subscriptions, where the exact timing of execution doesn't impact the user interface.
+    Use useLayoutEffect when you need to make measurements or changes to the DOM that directly affect the layout or visual rendering of your component. Be cautious with it, as it can impact performance if misused.
+    */
+
+//  function OtherStateHooks() {
+//   const [widthuseeffect, setWidtheffect] = useState(0);
+//   const [widthuselayout, setWidthlayout] = useState(0);
+
+//   useEffect(() => {
+//     // This runs asynchronously after the component renders.
+//     const handleResize1 = () => {
+//       setWidtheffect(window.innerWidth);
+//     };
+
+//     window.addEventListener('resize', handleResize1);
+//     return () => {
+//       window.removeEventListener('resize', handleResize1);
+//     };
+//   }, []); // Empty dependency array means it runs once after the initial render.
+
+//   useLayoutEffect(() => {// This runs synchronously after the component renders.
+//     const handleResize2 = () => {
+//       setWidthlayout(window.innerWidth);
+//     };
+
+//     window.addEventListener('resize', handleResize2);
+//     return () => {
+//       window.removeEventListener('resize', handleResize2);
+//     }
+//   }, []);
+
+//   return (
+//     <div>
+//       <p>Window Width useeffect : {widthuseeffect}px</p>
+//       <p>Window Width uselayouteffect : {widthuselayout}px</p>
+
+//     </div>
+//   );
+// }
+
+// export default OtherStateHooks;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////           USEMEMO AND USECALLBACK HOOK
+//              ------------------------------
+// these hooks are used for optimization, so that only sellected components render and memoised value returned for function block under the hooks
+// also used for refrential equality so same function not created again n again
+// these things help us to optimise our cde by minimizing number of renders
+
+//                              USEMEMO HOOK
+//                             --------------
+// used for optimiation
+// lets consider following program
+// we will change the theme of output div frm white to black to white by button click
+// for that, we store theme={color:"white", bgcolor:"black"} in a constant that we pass in style={theme}
+// also we enter numbrt in input box that returns double of that number in op div
+// but there is also a long loop to emulate a time taking process,
+// so the number doubler and theme change will happen after some delay due to this loop
+// (no usememo optimization used here yet)
+//
+//
+// const OtherStateHooks = () => {
+//   const [num, setNum] = useState(0);
+//   const [dark, setDark] = useState(true);
+
+//   const theme = {
+//     backgroundColor: dark ? "black" : "white",
+//     color: dark ? "white" : "black"
+//     // using ternary operator to return key value pair of style based on value of dark state
+//   };
+//   const doubler = (nm) => {
+//     let i, j, k = 0;
+//     for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } }
+//     // this loop acts as slow function n causes delay of 2 sec
+//     setNum(nm * 2); // so setnum executes only after loop completes
+//     console.log(num,dark)
+//   };
+
+//     const themechange=()=>{
+//       let i, j, k = 0;
+//       for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } }
+//         // this loop acts as slow function n causes delay of 2 sec
+// // so theme change is delayed
+//     dark ? setDark(false) : setDark(true)
+//     }
+
+//   return (
+//     <div>
+//       use-memo <br />
+//   <input type="number" style={theme} onChange={(event) => { doubler(Number(event.target.value)); }} />
+//       {/* // can also use parseInt funct instead of number class for type casting */}
+//       <br />
+//       {/* <button onClick={()=>{setDark(!dark) }}>theme change</button> */}
+//       <button style={theme} onClick={themechange}> theme change</button>
+//       <br />
+//       <div style={theme}>{num}</div><br /> {dark}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+
+// in this program, all components rerendered again n again even if that operation is not clicked
+
+//////////////////////////////////////////////////////////////////////////////////////
+// useMemo is a React hook that optimizes performance by memoizing or caching the result
+//of a function. It re-computes the result only when the dependencies (specified as an array)
+// change. This can prevent unnecessary re-calculations in components,
+//enhancing efficiency by storing and reusing calculated values between
+// renders. It's particularly useful for complex computations or expensive
+// operations in React components, ensuring they only run when needed.
+/*
+In computer science and programming, "memoization" is an optimization 
+technique used to improve the efficiency of functions or methods by
+ caching (remembering) the results of expensive function calls and 
+ returning the cached result when the same inputs occur again.
+  This can significantly reduce redundant computations, making
+   the program run faster.
+
+In the context of React's useMemo hook or similar techniques, 
+"memoized value" refers to a cached result that's stored and 
+returned when certain inputs or dependencies remain unchanged.
+ This avoids recalculating the same value repeatedly, which can 
+ be particularly useful when dealing with computationally expensive 
+ operations or calculations within a React component.
+*/
+/*
+The syntax for the useMemo hook in React is as follows:
+
+const memoizedValue = useMemo(() => {
+  // Compute and return the value you want to memoize
+}, [dependency1, dependency2, ...]);
+
+    memoizedValue: This variable stores the memoized result of the function.
+    useMemo(): This is the hook itself.
+    () => { * Compute and return value here * }: This is the function where you perform the computation you want to memoize.
+    [dependency1, dependency2, ...]: An array of dependencies. 
+    The hook will recompute the value whenever any of these dependencies change.
+
+The useMemo hook calculates the memoized value when the component renders
+ and re-calculates it only if any of the specified dependencies change.
+  This optimization can help improve the performance of your React application.
+
+*/
+// // . useMemo is typically used to memoize the result of an expensive computation or time taking process so that
+// //it's only recalculated when its dependencies change.
+
+//------------------------------------------------------------//
+// lets look at the following example-->>
+// (ignore if not understandable, skip  fwd, only used this example for value={numberr} operation explaination)
+// const ExpensiveCalculation = () => {
+//   const [numberr, setNumber] = useState(0);
+//   const [isEven, setIsEven] = useState(false);
+
+//   // Expensive calculation function that doubles the numberr
+//   const calculateDouble = (num) => {
+//     console.log('Calculating double...');
+//     let i, j, k = 0;
+//     for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } }
+//     return num * 2;
+//   };
+
+//   // Memoize the result of the expensive calculation
+//   const memoizedDouble = useMemo(() => {
+//     return calculateDouble(numberr);
+//   }, [numberr]);
+
+//   const handleNumberChange = (event) => {
+//     const newNumber = parseInt(event.target.value, 10);
+//     setNumber(newNumber);
+//     setIsEven(newNumber % 2 === 0); //returns true/false
+//   };
+
+//   return (
+//     <div>
+//       <p>Enter a numberr:</p>
+//       <input type="number" value={numberr} onChange={handleNumberChange} />
+//       <p>Double of the number (Memoized): {memoizedDouble}</p>
+//       <p>Is the number even? {isEven ? 'Yes' : 'No'}</p>
+//     </div>
+//   );
+// };
+
+// export default ExpensiveCalculation;
+/*
+In this example, we have an "ExpensiveCalculation" component that allows
+ you to enter a number. It calculates the double of the number but memoizes 
+ this calculation using the useMemo hook. The calculateDouble function is 
+ only called when the number state changes. This helps optimize performance 
+ by avoiding unnecessary calculations when other state values change.
+//-------------------------------------------------------//
+what is "value={numberr}"
+
+The value={numberr} attribute in the <input> element is a way to bind 
+the value of the input field to the number state variable in the React component.
+In the provided example:
+
+<input type="number" value={number} onChange={handleNumberChange} />
+
+    type="number" specifies that the input field should accept numeric values.
+
+    value={numberr} sets the value of the input field to the current value
+     of the number state variable. This means that the input field will 
+     display the value of number, and any changes made to it will be 
+     reflected in the number state.
+
+    onChange={handleNumberChange} specifies an event handler function 
+    (handleNumberChange) that will be called whenever the user changes the 
+    value of the input field. When the user types a new number, this function
+     will update the number state with the new value.
+
+By using value={numberr}, you establish a two-way binding between the input 
+field and the numberr state. This means that the input field's value is 
+controlled by React, and changes to the input field are tracked and managed by React,
+ making it a controlled component.
+
+*/
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//          USECALLBACK HOOK
+//         ------------------
+// it works similer to usememo but for storing or memoising functions instead of values of variables
+/*
+The syntax for the useCallback hook in React is as follows:
+
+const memoizedCallbackFunction = useCallback(() => {
+  // Compute and return the function you want to memoize, for example:-
+  setState(xyz)
+}, [dependency1, dependency2, ...]);
+
+/*
+useCallback vs. useMemo:
+
+    useCallback is primarily used to memoize functions (callbacks),
+    while useMemo is used to memoize values (any computed value, not just functions).
+
+    useCallback takes a function and returns a memoized version of that 
+    function. It's useful when you want to optimize functions that are 
+    used as dependencies in child components or passed as props.
+
+    useMemo takes a function and computes a memoized value based on its 
+    dependencies. It's useful when you want to optimize the computation of 
+    values that don't involve functions.
+
+In summary, both useCallback and useMemo are used for optimization in React.
+ useCallback is specifically for memoizing functions, while useMemo is for memoizing values.
+  You choose between them based on what you need to optimize in your application
+// pogram4 clarifies difference in their working
+//  note, useclbk works little differently then usememo, usememo returns 
+value while useclbk returns entire function which can be further used to 
+extract its value(pogram 5 explains further)
+  */
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// USEMEMO AND USECALLBACK EXAMPLE-->>
+
+// // // program 1->>  without usememo/usecallback
+
+// // in this program, three states decleared, count1/2 and themechange
+// // we declear a "theme" object that returns bgcolor n color based on the value of "dark" state using ternary operation
+// // then themechange function changes value of "dark" on each onclick of themechange button
+// // similerly cnt1clbk n cnt2clbk update values of count1 n 2 on their respective button onclick
+// // evnnum1 and 2 takes in count 1 n 2 value and returns true/false to span tag that
+// // checks its value using ternary operation n displays even or odd
+// //
+// //
+// //
+// //
+// //
+//
+// const OtherStateHooks = () => {
+//   const [dark, setDark] = useState(true);
+//   const [count1, setCount1] = useState(0);
+//   const [count2, setCount2] = useState(0);
+
+// // //----------------theme change----------------//
+//   const theme = {
+//     backgroundColor: dark ? "black" : "white",
+//     color: dark ? "white" : "black"
+//     // using ternary operator to return key value pair of style based on value of dark state
+//   };
+
+//   const themechange = () => {
+//     console.log("themechange block executed .")
+//     dark ? setDark(false) : setDark(true);
+//   };
+
+//       //------------counter callbacks-------------//
+//   const cnt1clbk = () => {
+//     console.log("cnt1clbk block executed .");
+
+//     //   var i,j,k= 0; //slow function / expansive calculation
+//     //   for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     setCount1(count1 + 1);
+//   }
+
+//   const cnt2clbk = () => {
+//     console.log("cnt2clbk block executed .");
+//     setCount2(count2 + 1);
+//   };
+
+//         //-------------even/odd check------------//
+
+//   //
+//     const evnnum1=( )=>{
+//       console.log("evnnum1 block executed .");
+
+//     // var i,j,k= 0; //slow function / expansive calculation
+//     // for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     return (count1%2===0)
+//   } /* returns true or false  */
+
+//   const evnnum2 = () => {
+//     console.log("evnnum2 block executed . .");
+//     return count2 % 2 === 0;
+//   };
+
+//   return (
+//     <div>
+//       <br />
+//       {/* <button onClick={()=>{setDark(!dark) }}>
+//     can also use this if u dont wanna use callback */}
+//       <button style={theme} onClick={themechange}>
+//         {" "}
+//         theme change{" "}
+//       </button>
+//       <br />
+//       <span style={theme}>click to change theme</span>
+//       <br />
+//       <span style={theme}> darkmode: {dark.toString()}</span>
+//       <br />
+//       {/* boolean cant be printed directly so converted to string with tostring method */}
+
+//       <button style={theme} onClick={cnt1clbk}>
+//         count1 :-- {count1}
+//       </button>
+
+//        <span style={theme}>count1 even/odd {evnnum1()?"even":"odd"}</span><br />
+
+//         <button style={theme} onClick={cnt2clbk}>
+//         count2 :-- {count2}
+//       </button>
+//       <span style={theme}>count2 even/odd {evnnum2() ? "even" : "odd"}</span>
+//       <br />
+//       {/* span tag like a small div tag */}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+
+//
+//
+//
+//
+//
+// output on console.log -->>
+
+// on theme change button click-->>
+/*
+themechange block executed . 
+evnnum1 block executed . 
+evnnum2 block executed . . 
+evnnum1 block executed . 
+evnnum2 block executed . 
+*/
+// on count1 button click-->>
+/*
+cnt1clbk block executed . 
+evnnum1 block executed . 
+evnnum2 block executed . . 
+evnnum1 block executed . 
+evnnum2 block executed . 
+*/
+// on count2 button click-->>
+/*
+cnt2clbk block executed . 
+evnnum1 block executed . 
+evnnum2 block executed . . 
+evnnum1 block executed . 
+evnnum2 block executed 
+*/
+
+// here we can see almost all blocks executed  on any button click, total rerender of whole program
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// // program 2->>  with usememo
+
+// here also we create states n callbck functions for theme/count1n2 n their evenodd check
+// In Program 2, evnnum1 is memoized using useMemo. It will only recompute
+// its value when count1 changes. This optimization avoids unnecessary computations on each render.
+//     In this program, we've replaced evnnum1 with a useMemo hook. This hook memoizes
+//the result of the function. It calculates whether count1 is even or odd and caches that value.
+// If count1 changes, it recalculates the value., if not means like other operations performed
+// like themechange or count2, count1 block is ignored n not console logged
+//
+//
+//
+//
+//
+//
+
+// const OtherStateHooks = () => {
+//   const [dark, setDark] = useState(true);
+//   const [count1, setCount1] = useState(0);
+//   const [count2, setCount2] = useState(0);
+
+// // //----------------theme change----------------//
+//   const theme = {
+//     backgroundColor: dark ? "black" : "white",
+//     color: dark ? "white" : "black"
+//     // using ternary operator to return key value pair of style based on value of dark state
+//   };
+
+//   const themechange = () => {
+//     console.log("themechange block executed .")
+//     dark ? setDark(false) : setDark(true);
+//   };
+
+//       //------------counter callbacks-------------//
+//   const cnt1clbk = () => {
+//     console.log("cnt1clbk block executed .");
+//     //   var i,j,k= 0; //slow function / expansive calculation
+//     //   for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     setCount1(count1 + 1);
+//   }
+
+//   const cnt2clbk = () => {
+//     console.log("cnt2clbk block executed .");
+//     setCount2(count2 + 1);
+//   };
+
+//         //-------------even/odd check------------//
+
+//   //
+//     const evnnum1=useMemo(()=>{ //  it will store the memoised value of count1 and wont rerender when other components themechng n cnt2 clicked
+//       console.log("evnnum1/usememo block executed .");
+//      // var i,j,k= 0; //slow function / expansive calculation
+//    //  for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//       return (count1%2===0)
+//   },[count1]) /* returns true or false  */
+
+//   const evnnum2 = () => {
+//     console.log("evnnum2 block executed .");
+//     return count2 % 2 === 0;
+//   };
+
+//   return (
+//     <div>
+//       <br />
+//       {/* <button onClick={()=>{setDark(!dark) }}>
+//     can also use this if u dont wanna use callback */}
+//       <button style={theme} onClick={themechange}>
+//         {" "}
+//         theme change{" "}
+//       </button>
+//       <br />
+//       <span style={theme}>click to change theme</span>
+//       <br />
+//       <span style={theme}> darkmode: {dark.toString()}</span>
+//       <br />
+//       {/* boolean cant be printed directly so converted to string with tostring method */}
+
+//       <button style={theme} onClick={cnt1clbk}>
+//         count1 :-- {count1}
+//       </button>
+
+//        <span style={theme}>count1 even/odd {evnnum1?"even":"odd"}</span><br />
+//        {/* evnnum1 is not a function error if invoked()like evnnum2 as its noe have usememo instead of arroe clbk */}
+
+//         <button style={theme} onClick={cnt2clbk}>
+//         count2 :-- {count2}
+//       </button>
+//       <span style={theme}>count2 even/odd {evnnum2() ? "even" : "odd"}</span>
+//       <br />
+//       {/* span tag like a small div tag */}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+
+//
+//
+//
+//
+//
+
+// output onconsole.log -->>
+
+// on theme change button click-->>
+/*
+Console was cleared
+themechange block executed . 
+evnnum2 block executed 
+*/
+// on count1 button click-->>
+/*
+cnt1clbk block executed . 
+evnnum1/usememo block executed . 
+evnnum2 block executed . 
+evnnum1/usememo block executed . 
+evnnum2 block executed 
+*/
+// on count2 button click-->>
+/*
+Console was cleared
+cnt2clbk block executed . 
+evnnum2 block executed 
+*/
+
+// here we can see on themechange n count2, cnt1clbk n evnnum1 ignored as
+// its under usememo block so memoised value rendered on screen instead
+// of executing its console.log and on count1 click, all operations rendered as count1 dependency changes
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// // program 3->> with usememo n useclbk
+// here also we create states n callbck functions for theme/count1n2 n their evenodd check
+// in program 3, we have applied useCallback on cnt1clbk and usememo on evnnum1
+//     In this program, we've changed cnt1clbk to use useCallback. This memoizes
+// the callback function, similar to useMemo, but for functions. It ensures that
+// the function is not recreated on every render if its dependencies (in this case, [count1]) have not changed.
+// In Program 3, both cnt1clbk and evnnum1 are optimized. cnt1clbk is memoized
+// using useCallback, which ensures it doesn't recreate the function unless count1 changes.
+// evnnum1 is memoized using useMemo, just like in Program 2. This combination of optimizations
+// reduces unnecessary function recreations and computations.
+//  note, if u try to use usememo for cnt1clbk, it will gib unlimited render error
+// bcoz usememo can only store a variable value, if u try to call a function n pass value in it
+// like setstate(xyz) or any other method or function, it will give error
+
+//
+//
+//
+//
+
+// const OtherStateHooks = () => {
+//   const [dark, setDark] = useState(true);
+//   const [count1, setCount1] = useState(0);
+//   const [count2, setCount2] = useState(0);
+
+// // //----------------theme change----------------//
+//   const theme = {
+//     backgroundColor: dark ? "black" : "white",
+//     color: dark ? "white" : "black"
+//     // using ternary operator to return key value pair of style based on value of dark state
+//   };
+
+//   const themechange = () => {
+//     console.log("themechange block executed .")
+//     dark ? setDark(false) : setDark(true);
+//   };
+
+//       //------------counter callbacks-------------//
+//   const cnt1clbk = useCallback(() => { // method or functions memoised by useclbk not usememo
+//     console.log("cnt1clbk/useCallback block executed .");
+// // note, if u try to use usememo here, it will gib unlimited render error bcoz usememo can only store a variable value, if u try to call a function n pass value in it like setstate(xyz) or any other method or function, it will give error
+//     //   var i,j,k= 0; //slow function / expansive calculation
+//     //   for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     setCount1(count1 + 1);
+//   },[count1])
+
+//   const cnt2clbk = () => {
+//     console.log("cnt2clbk block executed .");
+//     setCount2(count2 + 1);
+//   };
+
+//         //-------------even/odd check------------//
+
+//   //
+//     const evnnum1=useMemo(()=>{ // no setstate or any funct only % true false returned so usememo used
+//       console.log("evnnum1/usememo block executed .");
+//      // var i,j,k= 0; //slow function / expansive calculation
+//    //  for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//       return (count1%2===0)
+//   },[count1]) /* returns true or false  */
+
+//   const evnnum2 = () => {
+//     console.log("evnnum2 block executed .");
+//     return count2 % 2 === 0;
+//   };
+
+//   return (
+//     <div>
+//       <br />
+//       {/* <button onClick={()=>{setDark(!dark) }}>
+//     can also use this if u dont wanna use callback */}
+//       <button style={theme} onClick={themechange}>
+//         {" "}
+//         theme change{" "}
+//       </button>
+//       <br />
+//       <span style={theme}>click to change theme</span>
+//       <br />
+//       <span style={theme}> darkmode: {dark.toString()}</span>
+//       <br />
+//       {/* boolean cant be printed directly so converted to string with tostring method */}
+
+//       <button style={theme} onClick={cnt1clbk}>
+//         count1 :-- {count1}
+//       </button>
+
+//        <span style={theme}>count1 even/odd {evnnum1?"even":"odd"}</span><br />
+//        {/* evnnum1 is not a function error if invoked()like evnnum2 as it has usememo instead of arrow clbk */}
+
+//         <button style={theme} onClick={cnt2clbk}>
+//         count2 :-- {count2}
+//       </button>
+//       <span style={theme}>count2 even/odd {evnnum2() ? "even" : "odd"}</span>
+//       <br />
+//       {/* span tag like a small div tag */}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+//
+//
+//
+//
+//
+
+// // output onconsole.log -->>
+
+// // on theme change button click-->>
+// /*
+// Console was cleared
+// themechange block executed . .
+// evnnum2 block executed
+// */
+// // on count1 button click-->>
+// /*
+// cnt1clbk/useCallback block executed .
+// evnnum1/usememo block executed .
+// evnnum2 block executed .
+// evnnum1/usememo block executed .
+// evnnum2 block executed
+// */
+// // on count2 button click-->>
+// /*
+// Console was cleared
+// cnt2clbk block executed .
+// evnnum2 block executed
+// */
+
+// // here we can see on themechange n count2, cnt1clbk n evnnum1 ignored as
+// // its under use-memo/clbk block so memoised value rendered on screen instead
+// // of executing its console.log and on count1 click, all operations rendered as count1 dependency changes
+
+//--------------------------------------------------------------------------------------------------
+/*
+In summary, the key differences between these programs 
+are the use of useMemo and useCallback:
+
+    useMemo is used to memoize the result of a function and 
+    recompute it only when its dependencies change.
+    useCallback is used to memoize functions, preventing them 
+    from being recreated on each render unless their dependencies 
+    change.
+
+These hooks are used to optimize performance by reducing unnecessary
+ re-renders and computations. In Program 3, we've optimized both
+  the evnnum1 function and the cnt1clbk callback using these hooks
+*/
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// // with usememo n useclbk (same as program3 but with more comments)
+
+// const OtherStateHooks = () => {
+//   const [dark, setDark] = useState(true);
+//   const [count1, setCount1] = useState(0);
+//   const [count2, setCount2] = useState(0);
+
+//----------------theme change----------------//
+//   const theme = {
+//     backgroundColor: dark ? "black" : "white",
+//     color: dark ? "white" : "black"
+//     // using ternary operator to return key value pair of style based on value of dark state
+//   };
+
+//   const themechange = () => {
+//       console.log("themechange block executed")
+//     dark ? setDark(false) : setDark(true);
+//   };
+
+//       //------------counter callbacks-------------//
+
+// // with usecallback
+//   const cnt1clbk = useCallback(() => {
+//     console.log("cnt1clbk:useCallback block executed");
+
+//     //   var i,j,k= 0; //slow function / expansive calculation
+//     //   for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     setCount1(count1 + 1);
+//   }, [count1]);
+
+//   const cnt2clbk = () => {
+//     console.log("cnt2clbk block executed");
+//     setCount2(count2 + 1);
+//   };
+
+//         //-------------even/odd check------------//
+
+//   //
+//   // without usememo/clbk-->>
+//   //   const evnnum1=( )=>{
+//   //   var i,j,k= 0; //slow function / expansive calculation
+//   //   for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//   //   return (count1%2===0)
+//   // } /* returns true or false  */
+//   //
+//   //with usememo/clbk-->> (using slow function as usememo makes it a boolean variable instead of callbk func since now it does not have ()=>{} as use memo now stores the function logic ascllbck with dependency array so dont invoke it on jsx block evnnum1() like that for evnnum2())
+
+//   const evnnum1 = useMemo(() => {
+//     console.log("evnnum1:useMemo block executed");
+//     //   var i,j,k= 0; //slow function / expansive calculation
+//     //   for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     return count1 % 2 === 0;
+//   }, [count1]); // [dependency array dep1,dep2,dep3...] means only render if this changes
+
+//   const evnnum2 = () => {
+//     console.log("evnnum2 block executed");
+//     return count2 % 2 === 0;
+//   }; // no args passed so uses current count2 value as variable
+
+//   return (
+//     <div>
+//       <br />
+//       {/* <button onClick={()=>{setDark(!dark) }}>
+//     can also use this if u dont wanna use callback */}
+//       <button style={theme} onClick={themechange}>
+//         {" "}
+//         theme change{" "}
+//       </button>
+//       <br />
+//       <span style={theme}>click to change theme</span>
+//       <br />
+//       <span style={theme}> darkmode: {dark.toString()}</span>
+//       <br />
+//       {/* boolean cant be printed directly so converted to string with tostring method */}
+
+//       <button style={theme} onClick={cnt1clbk}>
+//         count1 :-- {count1}
+//       </button>
+
+//       {/* without usememo-->>
+//        <span style={theme}>count1 even/odd {evnnum1()?"even":"odd"}</span><br /> */}
+
+//       {/* with usememo*/}
+//       <span style={theme}>count1 even/odd {evnnum1 ? "even" : "odd"}</span>
+//       <br />
+//       {/* note, can not invoke evnnum1 "evnnum1()" like evnnum2 as it will gib error evnnum1 not a function,
+// while previously it had a clbk ()=>{} arrow funct inside it like evnnum2, now it has usememo
+//  inside it which has a clbk n a dependency, so typeof evnnum1 now is variable boolean
+//   (using slow function as usememo makes it a boolean variable instead of callbk func since now it does not have ()=>{} as use memo now stores the function logic with dependency array so dont invoke it on jsx block evnnum1() like that for evnnum2())
+//  while evnnum2 is  a function ()=>{} that we invoke here to execute its callback code   */}
+//       <button style={theme} onClick={cnt2clbk}>
+//         count2 :-- {count2}
+//       </button>
+//       <span style={theme}>count2 even/odd {evnnum2() ? "even" : "odd"}</span>
+//       <br />
+//       {/* span tag like a small div tag */}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// program 4
+// lets optimise all blocks themechange, cnt1clbk, cnt2clbk, evnnum1, evnnum2
+//
+//
+//
+// //
+// const OtherStateHooks = () => {
+//   const [dark, setDark] = useState(true);
+//   const [count1, setCount1] = useState(0);
+//   const [count2, setCount2] = useState(0);
+
+//   // //----------------theme change----------------//
+//   const theme = {
+//     backgroundColor: dark ? "black" : "white",
+//     color: dark ? "white" : "black"
+//     // using ternary operator to return key value pair of style based on value of dark state
+//   };
+
+//   const themechange = useCallback(() => {
+//     // useclbk coz setstate method
+//     console.log("themechange/useCallback block executed .");
+//     dark ? setDark(false) : setDark(true);
+//   }, [dark]);
+
+//   //------------counter callbacks-------------//
+//   const cnt1clbk = useCallback(() => {
+//     // useclbk coz setstate method
+//     console.log("cnt1clbk/useCallback block executed .");
+//     // note, if u try to use usememo here, it will gib unlimited render error bcoz usememo can only store a variable value, if u try to call a function n pass value in it like setstate(xyz) or any other method or function, it will give error
+//     //   var i,j,k= 0; //slow function / expansive calculation
+//     //   for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     setCount1(count1 + 1);
+//   }, [count1]);
+
+//   const cnt2clbk = useCallback(() => {
+//     // useclbk coz setstate method
+//     console.log("cnt2clbk/useCallback block executed .");
+//     setCount2(count2 + 1);
+//   }, [count2]);
+
+//   //-------------even/odd check------------//
+
+//   //
+//   const evnnum1 = useMemo(() => {
+//     // usememo coz no setstate method only % true/false expression returned
+//     console.log("evnnum1/usememo block executed .");
+
+//     // var i,j,k= 0; //slow function / expansive calculation
+//     //  for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     return count1 % 2 === 0;
+//   }, [count1]); /* returns true or false  */
+
+//   const evnnum2 = useMemo(() => {
+//     // usememo coz no setstate method only % true/false expression returned
+//     console.log("evnnum2/usememo block executed .");
+//     return count2 % 2 === 0;
+//   }, [count2]);
+
+//   return (
+//     <div>
+//       <br />
+//       {/* <button onClick={()=>{setDark(!dark) }}>
+//     can also use this if u dont wanna use callback */}
+//       <button style={theme} onClick={themechange}>
+//         {" "}
+//         theme change{" "}
+//       </button>
+//       <br />
+//       <span style={theme}>click to change theme</span>
+//       <br />
+//       <span style={theme}> darkmode: {dark.toString()}</span>
+//       <br />
+//       {/* boolean cant be printed directly so converted to string with tostring method */}
+
+//       <button style={theme} onClick={cnt1clbk}>
+//         count1 :-- {count1}
+//       </button>
+//       <span style={theme}>count1 even/odd {evnnum1 ? "even" : "odd"}</span>
+//       <br />
+
+//       <button style={theme} onClick={cnt2clbk}>
+//         count2 :-- {count2}
+//       </button>
+//       <span style={theme}>count2 even/odd {evnnum2 ? "even" : "odd"}</span>
+//       <br />
+//       {/* span tag like a small div tag */}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+
+// output onconsole.log -->>
+
+// on theme change button click-->>
+/*
+themechange/useCallback block executed . 
+*/
+// on count1 button click-->>
+/*
+cnt1clbk/useCallback block executed . 
+evnnum1/usememo block executed 
+*/
+// on count2 button click-->>
+/*
+cnt2clbk/useCallback block executed . 
+evnnum2/usememo block executed 
+*/
+
+// here, all blocks are optimised so only those executions take place for
+// which the button are clicked n dependency changed, rest whose dependency
+// doesnt change return the memoised value and are not rerendered
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// pogram 5-->>
+// similer to above
+// but instead of cnt1clbk usexyz
+// in this example, we created evnm1clbk funct  that returns count1%2===0 with count1 dependency
+// evnnum1 picks up that return value evnm1clbk() invoking it to get true false data to return to jsx , evnm1clbk is dependency here
+
+// const OtherStateHooks = () => {
+//   const [dark, setDark] = useState(true);
+//   const [count1, setCount1] = useState(0);
+//   const [count2, setCount2] = useState(0);
+
+//   const theme = {
+//     backgroundColor: dark ? "black" : "white",
+//     color: dark ? "white" : "black"
+//     // using ternary operator to return key value pair of style based on value of dark state
+//   };
+
+//   const themechange = () => {
+//     console.log("themechange block executed");
+//     dark ? setDark(false) : setDark(true);
+//   };
+
+//   //---------count-1/2-clbk------------------//
+//   const cnt1clbk = () => {
+//     console.log("cnt1clbk block");
+//     setCount1(count1 + 1);
+//   }; // counter callbacks
+//   const cnt2clbk = () => {
+//     console.log("cnt2clbk block");
+//     setCount2(count2 + 1);
+//   };
+
+//   //
+//   //
+
+//   //------------even/odd clbk-----------------//
+//   const evnm1clbk = useCallback(() => {
+//     console.log("evnm1clbk/usecallback block");
+//     // var i,j,k= 0; //slow function / expansive calculation
+//     // for (i = 0; i <= 10000; i++) { for (j = 0; j <= 10000; j++) { for (k = 0; k <= 5; k++) {} } } // long loop 3sec delay
+//     return count1 % 2 === 0;
+//   }, [count1]);
+
+// // Define a memoized callback function for checking if count1 is even.
+// // and returns the evnm1clbk function itself, the value true/false is
+// //  inside this function block{}, so the value itself is only not returned
+// //   but whole function returned,
+// //    note evnnum1clbk behaves like a function while evennum1 asa variable
+// // as we saw the function {} block returned not just its value true/false
+// //hence its invoked inside evnum1 "return evnm1clbk()" to get true/false value which is further returned to jsx span component
+
+//   // in this example, we created evnm1clbk funct above that returns count1%2===0 with count1 dependency
+//   // evnnum1 picks up that return value evnm1clbk() invoking it to get true false data to return to jsx , evnm1clbk is dependency here
+
+//   const evnnum1 = useMemo(() => {
+//     console.log("evnnum1/usememo block");
+//     return evnm1clbk();
+//   }, [evnm1clbk]); // [dependency array dep1,dep2,dep3...] means only render if this changes
+
+//   const evnnum2 = () => {
+//     console.log("evnnum2 block");
+//     return count2 % 2 === 0;
+//   }; // no args passed so uses current count2 value as variable
+
+//   return (
+//     <div>
+//       <br />
+//       {/* <button onClick={()=>{setDark(!dark) }}>
+//     can also use this if u dont wanna use callback */}
+//       <button style={theme} onClick={themechange}>
+//         {" "}
+//         theme change{" "}
+//       </button>
+//       <br />
+//       <span style={theme}>click to change theme</span>
+//       <br />
+//       <span style={theme}> darkmode: {dark.toString()}</span>
+//       <br />
+//       {/* boolean cant be printed directly so converted to string with tostring method */}
+
+//       <button style={theme} onClick={cnt1clbk}>
+//         count1 :-- {count1}
+//       </button>
+
+//       {/* without usememo-->>
+//       <span style={theme}>count1 even/odd {evnnum1()?"even":"odd"}</span><br /> */}
+
+//       {/* with usememo*/}
+//       <span style={theme}>count1 even/odd {evnnum1 ? "even" : "odd"}</span>
+//       <br />
+//       {/* note, can not invoke evnnum1 "evnnum1()" like evnnum2 as it will gib error evnnum1 not a function,
+// while previously it had a clbk ()=>{} arrow funct inside it like evnnum2, now it has usememo
+// inside it which has a clbk n a dependency, so typeof evnnum1 now is variable boolean
+//   (using slow function as usememo makes it a boolean variable instead of callbk func since now it does not have ()=>{} as use memo now stores the function logic with dependency array so dont invoke it on jsx block evnnum1() like that for evnnum2())
+// while evnnum2 is  a function ()=>{} that we invoke here to execute its callback code   */}
+//       <button style={theme} onClick={cnt2clbk}>
+//         count2 :-- {count2}
+//       </button>
+//       <span style={theme}>count2 even/odd {evnnum2() ? "even" : "odd"}</span>
+//       <br />
+//       {/* span tag like a small div tag */}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+/*
+in this program-->>
+
+ Define a memoized callback function for checking if count1 is even. 
+ and returns the evnm1clbk function itself, the value true/false is
+  inside this function block{}, so the value itself is only not returned
+   but whole function returned,
+    note evnnum1clbk behaves like a function while evennum1 asa variable
+
+const evnm1clbk = useCallback(() => {
+  console.log("evnm1clbk/useCallback block executed");
+  // Determine if count1 is even or not
+  return count1 % 2 === 0;
+}, [count1]);
+
+    evnm1clbk is memoized using useCallback with a dependency array [count1].
+    This means the function is recreated only when count1 changes.
+    It checks if count1 is even and returns true or false.
+
+as we saw the function {} block returned not just its value true/false hence its invoked inside evnum1 "return evnm1clbk()" to get true/false value which is further returned to jsx span component   
+after which it uses useMemo to create a memoized value for the even/odd check of count1.
+
+
+
+const evnnum1 = useMemo(() => {
+  console.log("evnnum1/useMemo block executed");
+  // Invoke the memoized function to get the even/odd result
+  return evnm1clbk();
+}, [evnm1clbk]);
+
+    evnnum1 uses useMemo to memoize the result of invoking evnm1clbk().
+    It ensures that the even/odd check is only recomputed when evnm1clbk changes
+*/
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//          USETRANSITION HOOK
+//         -----------------
+
+// usetransit hook meant to speed up application n make them feel responsive to user even if some long process going on in background
+// consider the following  program, it has n input state and a list state
+// we have one input box with onchange inpclbk that assigns the value to input state
+// after that we created a temperory list and we run a long loop to fill that list templst.push(event.target.value); // passing {input} in it only enters previous input coz its async operation
+// after which we assign the temp list to list state  setList(templst);
+// in jsx block, we rint the {input} state below the input box and the list below it by running a list.map loop       {list.map((iteam) => { return <p>{iteam}</p> })}
+// what we observe is that since its a long loop, it takes about a second to complete the operation, so due to which, iur {input} output in jsx block also prints after a second with the list
+// this makes it feel like there is a lag of a second in operation, react takes all the state updates like setinp/setlst into one call and renders after all operations finish
+// what if we want to print {input} immideatly as high priority and print the list after some time when loop completed
+// so here we need some way to seperate both blocks of operation setinput and setlist so they render seperately
+// thats what settransition allows us to do,
+// const {ispending, starttransition} =usetransition()
+// now any code block under starttransition(()=>{takes a clbk}) will be set to low priority n other state updates outside set transition block will be rendered first
+// ispending returns true/false n can be used to display "loading..." until the operation is completed
+// in jsx-->> {isPending && <p>loading...</p>}
+// note, using transit hook, u making ur app render more times so use it only when absolutely necessery
+// export default function OtherStateHooks() {
+//   const [input, setInput] = useState();
+//   const [list, setList] = useState([]);
+
+//   const [isPending, startTransition] = useTransition();
+
+//   const listsize = 50000;
+
+//   /* // without usetransition, both states considered high priority so rendered togather
+//   const inpclbk = (event) => {
+//     setInput(event.target.value);
+//     const templst = [];
+//     for (let i = 0; i < listsize / 5; i++) {
+//       for (let j = 0; j < 5; j++) {
+//         templst.push(event.target.value);
+//       }
+//     }
+//     setList(templst);
+//   }
+//   */
+//   // with usetransit,
+//   const inpclbk = (event) => {
+//     setInput(event.target.value);
+//     //this basically states that block under usetransit is low priority and render later, render other state updates first
+//     startTransition(() => {
+//       const templst = [];
+//       for (let i = 0; i < listsize / 5; i++) {
+//         for (let j = 0; j < 5; j++) {
+//           templst.push(event.target.value);
+//         }
+//       }
+//       setList(templst);
+//     });
+//   };
+
+//   //
+//   return (
+//     <div>
+//       <br />
+//       <input onChange={inpclbk} /> <br />
+//       {input} <br /> {isPending && <p>loading...</p>}
+//       {list.map((iteam) => {
+//         return <p>{iteam}</p>;
+//       })}
+//     </div>
+//   );
+// }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//                        USEDEFFEREDVALUE HOOK
+// // this is very similar to debounce or throttle
+// // basically anytime u type something, instead of taking one element at a time in input,
+// // what u want is to only take input n send it to any operation (like to update the list as in example below)
+// // only when user stopped typing for certain amt of time like 100ms till ur last keypress , this will minimise rerendering and wont cause lag in typing and will make better user experience,
+// // once the user done typing, then only input state would update n data used in other parts of the program,
+// // for that we use deffered value hook
+// //
+// // consider the following program
+// // sending data via prop frm parent to child component and rendering out a list as array of jsx
+// // but it takes some time for the child to complete creating list n sending back to parent component, (long loop emulating big list of jsx creation)
+// // so when user types something in inp, it takes some time to create the list and render both input n the list togather
+
+// export default function OtherStateHooks() {
+//   const [input, setInput] = useState();
+//   //  const [list, setList] = useState([]);
+
+//   // const listsize = 50;
+
+//   /* // can also create a list state in same funct  (prev prog logic)
+//       const inpclbk = (event) => {
+//         setInput(event.target.value);
+//         const templst = [];
+//         for (let i = 0; i < listsize / 5; i++) {
+//           for (let j = 0; j < 5; j++) {
+//             templst.push(event.target.value);
+//           }
+//         }
+//         setList(templst);
+//       }
+//       */
+//   // const inpclbk = (event) => {setInput(event.target.value)}
+
+//   //
+//   return (
+//     <div>
+//       <br />
+//       <input
+//         onChange={(event) => {
+//           setInput(event.target.value);
+//         }}
+//       />
+//       <br />
+//       {input} <br />
+//       {/* {list.map((iteam) => {
+//             return <p>{iteam}</p>;  })} */}
+//       <span style={{ backgroundColor: "yellow" }}>useDeferredValue test</span>
+//       <Listt propatribute={input} />
+//       {/* // passing input state as prop to child list component */}
+//     </div>
+//   );
+// }
+
+// //--------------------------------------------------------------------------------
+
+// // list component like Listt.js
+// //  "export default Listt" and "import Listt frm "/xxx"" in parent component
+// // both can be in different or in same file both will work
+// // taking in prop, accesing its propatribute and creating a list array of jsx thats returned and displayed in <Listt/> comp in parent
+// // as the long array takes time to  create n jsx waits to render both {input} n <listt/> togather, it causes lag while typing
+// // so lets use usedeffered to debounse n throttle such that it will only update n start running the loop to create array of jsx after it has stopped getting data for some time
+// // const Listt = (props) => {
+// //   const listsize = 50000;
+
+// //   const templst = [];
+// //   for (let i = 0; i < listsize / 5; i++) {
+// //     for (let j = 0; j < 5; j++) {
+// //       templst.push(<p>{props.propatribute}</p>);
+// //     // access props attribute value to update dummy list
+// //     }}
+// // console.log(templst)
+// //   return templst;
+// // };
+// // export default Listt
+// //-------------------------------------------------------------------------------------
+
+// // so lets use usedeffered to debounse n throttle such that it will only update n start running the loop to create array of jsx after it has stopped getting data for some time
+// //   const deffinput = useDeferredValue(props.propatribute);
+// // now deffinput wont change unless
+// // now deffinput wont change unless props.propatribute stops changing for certain amt of time means user stops tyingin inp box (which in turn is updating inp in parent n sending it as propto list component)
+// // so we update array of jsx with       templst.push(<p>{deffinput}</p>); instead of props.propatribute like we were doing b4
+// // this will not cause lag while user types
+
+// const Listt = (props) => {
+//   const listsize = 5000;
+//   const deffinput = useDeferredValue(props.propatribute);
+//   const templst = [];
+//   for (let i = 0; i < listsize / 5; i++) {
+//     for (let j = 0; j < 5; j++) {
+//       templst.push(<p>{deffinput}</p>);
+//       // access props attribute value to update dummy list
+//     }
+//   }
+//   // console.log(templst);
+//   // for debug-->>
+//   console.log("input:- ", props.propatribute);
+//   console.log("deffered input:- ", deffinput);
+
+//   return templst;
+// };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                USEREF HOOK
+//               -------------
+//
+//
+/*
+useRef is a hook in React that provides a way to access and interact with
+ a DOM element or to persist mutable data across renders without causing 
+ re-renders when the data changes. It's a versatile hook with various use 
+ cases beyond just accessing DOM elements.
+
+Syntax:
+
+const myRef = useRef(initialValue);
+
+    myRef is the variable that will hold the reference to the DOM element 
+    or the mutable data.
+    initialValue (optional) is an initial value you can provide for the ref.
+     This can be useful when you're using the ref for storing mutable data.
+
+Use Cases:
+----------------------------------------------------------------------------------
+
+    Accessing DOM Elements: The primary use of useRef is to access and 
+    interact with DOM elements. When you create a ref and attach it to 
+    a JSX element, you can later access the DOM element using 
+    the .current property of the ref.
+
+    
+
+import { useRef, useEffect } from 'react';
+
+function MyComponent() {
+  const myRef = useRef();
+
+  useEffect(() => {
+    // Access the DOM element
+    myRef.current.focus();
+  }, []);
+
+  return <input ref={myRef} />;
+}
+
+----------------------------------------------------------------------------------
+
+Storing Mutable Data Without Causing Rerenders: You can use useRef to store 
+data that should not trigger component rerenders when changed. Since changing
+ the .current property of a ref doesn't cause re-renders, it's suitable for
+  storing data that doesn't need to be in the component's state.
+
+ 
+
+import { useRef, useEffect } from 'react';
+
+function MyComponent() {
+  const count = useRef(0);
+
+  useEffect(() => {
+    count.current = count.current + 1;
+    console.log(`Count: ${count.current}`);
+  }, []);
+
+  return <div>Count: {count.current}</div>;
+}
+
+----------------------------------------------------------------------------------
+
+Preserving Values Across Renders: useRef can be used to preserve values 
+across renders. The value of a ref persists between renders and doesn't 
+trigger re-renders when changed. This is useful for maintaining data that 
+should be retained across renders but doesn't affect the component's output.
+
+
+
+import { useRef, useEffect } from 'react';
+
+function MyComponent() {
+  const prevCountRef = useRef();
+
+  useEffect(() => {
+    // Store the current count in the ref
+    prevCountRef.current = count;
+
+    // Access the previous count
+    console.log(`Previous Count: ${prevCountRef.current}`);
+  }, [count]);
+
+  const count = 42;
+
+  return <div>Count: {count}</div>;
+}
+----------------------------------------------------------------------------------
+
+Referencing Child Components: You can use useRef to reference child components 
+or elements, allowing you to call functions or manipulate their properties 
+directly.
+
+ 
+
+    import { useRef } from 'react';
+    import ChildComponent from './ChildComponent';
+
+    function ParentComponent() {
+      const childRef = useRef();
+
+      const handleClick = () => {
+        // Access and call a function in the child component
+        childRef.current.doSomething();
+      };
+
+      return (
+        <div>
+          <ChildComponent ref={childRef} />
+          <button onClick={handleClick}>Call Child Function</button>
+        </div>
+      );
+    }
+----------------------------------------------------------------------------------
+ Here are all the use cases for the useRef hook in React that we've discussed:
+-----
+    DOM manipulation
+    Managing side effects
+    Managing state without triggering re-renders
+    Avoiding unnecessary re-renders
+    Storing reference to external resources
+    Caching API responses
+    Implementing controlled components
+    Keeping track of the last rendered state
+
+Each of these use cases can help improve performance and functionality 
+in React components, depending on the specific needs of your application
+These are just a few examples of how useRef can be used in React. 
+It's a powerful hook for handling DOM manipulation and managing mutable 
+data within functional components.
+----------------------------------------------------------------------------------
+*/
+//  Render test
+// -------------
+// in this program, input box assigns the value by onchange to dta state by clbk setdta
+// lets count how many times page renders
+// for that we create a useeffect hook without []dependency so it runs on every render to count no of renders
+// but it will go in infinite loop
+// const [count,setCount]=useState(0)
+/*   useEffect(()=>{
+           setCount(count+1)
+     })      */
+//  {/* <span style={theme}>{count}</span> */}
+// when u update ur state, u cause ur component to rerender,
+// the first time useeffect sets the count state, it causes rerender which again triggers rerender n so on
+// so we cant do it with state as change in state renders the component,
+// React Hook useEffect contains a call to 'setCount'. Without a list of dependencies,
+// this can lead to an infinite chain of updates.
+//  we wanna count the number of renders, not causing render  during count itself
+// for that, we use REF or reference, a ref is similer to state, u can store value in it
+// but it does not causes render when ref value changes as ref exist between the states, its not really a state itself
+// ref returns an object with a "current:" key element that stores the value we wanna store
+// and we can access that value anytime with xyz.current.value
+// we can initialise useRef("xxxx0000") if we want
+/*
+const countref=useRef(0)
+console.log(countref) // op {current: 0}
+console.log(countref.current) // op 0
+console.log(countref.current.value) // op undefined // as no value defined yet
+*/
+
+// now lets use useref in useeffect instead of setcount state update,
+// note, we need to update current value so countref.current=countref.current+1
+// now on every click of themechange button or typing in input box,
+// countref value updated in useeffect without causing render due to change in countref itself like it was doing on setCount(count)
+
+// const OtherStateHooks = () => {
+//   const [dark, setDark] = useState(true);
+//   const [dta, setDta] = useState("");
+//   // const [count,setCount]=useState(0)
+//   const countref = useRef(0);
+//   // console.log(countref)
+//   // console.log(countref.current)
+//   // console.log(countref.current.value)
+
+//   // //----------------theme change----------------//
+//   const theme = {
+//     backgroundColor: dark ? "black" : "white",
+//     color: dark ? "white" : "black"
+//     // using ternary operator to return key value pair of style based on value of dark state
+//   };
+
+//   const themechange = useCallback(() => {
+//     // useclbk coz setstate method
+//     console.log("themechange/useCallback block executed .");
+//     dark ? setDark(false) : setDark(true);
+//   }, [dark]);
+//   // //--------------------------------------------------//
+//   /* // this will cause infinite loop (no [] so renders on every state update so we can count no.of renders)
+// // as setcount sets the state, it causes rerender, it sets again n rerender useeffect n it goes on infinitely
+// useEffect(()=>{
+//   setCount(count+1)
+// })
+// */
+//   useEffect(() => {
+//     countref.current = countref.current + 1; // now display it in jsx
+//   }); // this wont cause render in any change in itself coz only states cause rerender n useref is not really a state
+
+//   return (
+//     <div>
+//       <br />
+//       {/* <button onClick={()=>{setDark(!dark) }}>
+//     can also use this if u dont wanna use callback */}
+//       <button style={theme} onClick={themechange}>
+//         theme change btn
+//       </button>
+//       <br />
+//       <br />
+//       <input
+//         style={theme}
+//         onChange={(event) => {
+//           setDta(event.target.value);
+//         }}
+//       />
+//       <br />
+//       <span style={theme}>{dta}</span>
+//       <br />
+//       {/* <span style={theme}>{count}</span> this causes infinite loop */}
+//       <span style={theme}>{countref.current}</span>
+//       {/* now on every click of themechange button or typing in input box, countref value updated in useeffect without causing render due to change in countref itself like it was doing on setstate(count) */}
+//       {/* span tag like a small div tag */}
+//     </div>
+//   );
+// };
+// export default OtherStateHooks;
+/* ---------------------------------------------------------------------------------------------------
+(useRef) are not considered state in the same way as state variables created 
+with useState. Here's a more detailed explanation of why refs are not considered state:
+
+
+    State Variables (useState): When you update a state variable using 
+    useState, it triggers a re-render of your React component. This is
+     because React considers state variables as part of the component's 
+     internal state, and any changes to them will cause React to re-evaluate 
+     the component's rendering.
+
+    Refs (useRef): Refs, specifically the current property of a ref, are 
+    not part of React's built-in reactivity system. Changing the current 
+    property of a ref does not trigger a re-render of your component. 
+    React doesn't treat changes to refs as changes to the component's state.
+
+Refs in React are not considered part of a component's state, and they 
+work differently from state variables. Here's an explanation of why refs are 
+not "really" a state:
+
+    No Re-renders: When you update the value of a ref, it does not cause 
+    your component to re-render. This is in contrast to state variables, 
+    which, when updated, trigger a re-render of the component to reflect 
+    the new state.
+
+    Not Part of Component's Reactive Data: Refs are not included in the data 
+    that React uses to determine when to re-render a component. React's 
+    reactivity system is based on state and props. Changes in state and 
+    props trigger re-renders, but changes in refs do not.
+
+    Mutable Values: Refs are typically used to store mutable values that 
+    don't need to be tracked by React's reactivity system. They are commonly 
+    used to interact with the DOM directly, manage focus, or store values that
+     are not meant to be part of your component's UI.
+
+    Accessing DOM Elements: One of the primary use cases for refs is to access
+     DOM elements. You can use ref attributes on elements to create a reference
+      to the DOM node, which allows you to manipulate it directly without 
+      causing React to re-render.
+---------------------------------------------------------------------------------------------------
+ */
+/*
+In this following example, updating count (state) triggers a re-render of the
+ component, while updating countRef.current (ref) does not. Refs are 
+ particularly useful when you need to manage mutable values or interact 
+ with the DOM without affecting your component's rendering.
+ (no infinite loop here like prev example coz no useeffect used instead a callback used on onclick)    
+
+ here, when incriment state button clicked, state value updates 
+ but when u click ref button, ref value does not changes on screen, it console logged in console but 
+ no display on screen means no render trigger
+ but as soon as u click incriment state button, the updated value of ref is displayed along with updating state value
+*/
+// function OtherStateHooks() {
+//   const [count, setCount] = useState(0); // This is a state variable
+//   const countRef = useRef(0); // This is a ref
+
+//   const incrementState = () => {
+//     console.log("incrementState block ", count);
+//     setCount(count + 1); // Updates the state, triggers a re-render
+//     console.log("incrementState block ", count);
+//   };
+
+//   const incrementRef = () => {
+//     countRef.current = countRef.current + 1; // Updates the ref, does not trigger a re-render
+//     console.log("incrementRef block ", countRef.current);
+//   };
+
+//   return (
+//     <div>
+//       <p>State: {count}</p>
+//       <p>Ref: {countRef.current}</p>
+//       <button onClick={incrementState}>Increment State</button>
+//       <button onClick={incrementRef}>Increment Ref</button>
+//     </div>
+//   );
+// }
+// export default OtherStateHooks;
+
+/*
+In the provided program, we have a React functional component that demonstrates
+ the difference between updating state and updating a ref:
+
+    When you click the "Increment State" button, the count state value is
+     updated using setCount(count + 1). This update triggers a re-render of 
+     the component, and the new count value is displayed on the screen.
+
+    On the other hand, when you click the "Increment Ref" button, the countRef
+     value is incremented using countRef.current += 1. Unlike state, updating a
+      ref doesn't trigger a re-render of the component. While the updated value 
+      is logged to the console, it is not reflected on the screen.
+
+    However, here's an interesting behavior: when you subsequently click the 
+    "Increment State" button after clicking "Increment Ref," the updated value 
+    of the ref (countRef) is suddenly displayed on the screen alongside the 
+    state value. This occurs because the re-render triggered by changing the 
+    state also displays the current value of the ref.
+
+In summary, changing the state triggers a re-render of the component, which 
+allows both state and ref values to be displayed on the screen. However, 
+updating a ref on its own doesn't cause a re-render, so the change is not 
+immediately reflected in the UI until some other action, like changing the 
+state, triggers a re-render.
+*/
+//----------------------------------------------------------------------------
+
+//  Accessing DOM elements
+// ------------------------
+// generally, we access dom element by document.getelementby_id/classname.....
+// but we can also access dom element by using "ref" attribute in input or any jsx element
+// (each element has ref attribute bydefault) and passing ref variable as callback ref={refvariable}
+// this links the ref variable to the jsx tag and we can perform various operations
+// lets use a button click to bring the "focus" to input box
+
+// function OtherStateHooks() {
+//   const [dta, setDta] = useState();
+//   const refvariable = useRef();
+//   const prevdta = useRef();
+
+//   const focusfnct = () => {
+//     refvariable.current.focus(); // note, must invoke() focus window funct
+//     // now, whenever u click button, focus goes to input box n u can start typing
+//     // u can also use it in useeffect so when ur page renders, some input boxlike login passwrd block comes into focus
+//     // u can also pass some data on button click like following-->
+//     refvariable.current.value = "ref test data ";
+//     // now when u click on button, it fovus on the input box and also pastes "ref test data" in input box
+//     // but notice that nothing displayed in data:{dta}, dta state not changed as nothing rendered yet
+//     // ref just uses "value={value}" attribute to put in the ref value in the input box
+//     // but onchange event callback not triggered so dta state value not changed,
+//     // when u type anything after that, then only onchange will update dta value
+//     // like type x and dta value becomes "ref test datax" but only n only after u typed something as ref does not render the components
+//     refvariable.current.style.backgroundColor = "yellow"; // u can do many other dom changes by useref
+//     console.log("refvariable ", refvariable);
+//     console.log("refvariable.current ", refvariable.current);
+//     console.log("refvariable.current.value ", refvariable.current.value);
+//   };
+//   /* ----------------------------------------------------------------------                   console.log op-->>
+
+// refvariable
+// {current: HTMLInputElement}
+// current: <INPUT></INPUT>
+
+// refvariable.current
+// <INPUT></INPUT>
+
+// refvariable.current.value
+// hhhhhhjjjh
+// --------------------------------------------------------------------------*/
+
+//   // saving previous state data using useeffect to run on ech new render
+//   useEffect(() => {
+//     prevdta.current = dta;
+//   }, [dta]);
+
+//   return (
+//     <div>
+//       <input
+//         ref={refvariable}
+//         onChange={(event) => {
+//           setDta(event.target.value);
+//         }}
+//       />
+//       <br />
+//       current data: {dta}
+//       <br />
+//       previous data: {prevdta.current}
+//       <br />
+//       <button onClick={focusfnct}>focus on input box</button>
+//     </div>
+//   );
+// }
+// export default OtherStateHooks;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//              USECONTEXT HOOK
+//             -----------------
+//check out app.js, nstdchld.js  where data sent via context hook frm app.js parent to children n also sent as props frm app.js to page1/2
+
+//            in app.js-->>'
+
+/*
+import { useState, createContext } from "react";
+ 
+          // creating a context for the usestate variables passdatax and its setpass function to other pages and components
+export const Appcntxt = createContext();
+          // creating an object of createContext() function  and exporting it frm app.js to all other components n pages
+          // which will use their own usecontext hook and this globally exported Appcntxt context togather
+          // to get data such as state, variable, funct, setfunct etx from app.js or parent component
+          // note, Appcntxt is an exported  object (of createcontext method) frm parent component
+          // but the way it sends the passdata and its set function to its component is by acting as a wrapper
+          // for all the routes it will send the data to by <Appcntxt.Provider value={{ passdatax, setPassdatax }}>
+          // so its an exported object frm parent to all children that children import
+          // to get the data frm appcntxt object which the appcntxt object stores
+          // when it wraps the jsxcomponents(in app.js-return block) it will send data to by
+          // storing the variables/functs to be sent as object { passdatax, setPassdatax }
+          // which is passed as a component attribute with the attribute we see here as "value"(value={{ passdatax, setPassdatax }})
+          //  <Appcntxt.Provider value={{ passdatax, setPassdatax }}>, so all the routes it contain will have access to the context object and passed object data
+
+export default function App() {
+  //----- passing data via props and usecontext ------------------------------------------------------------------
+  const [passdata, setPassdata] = useState("passed data"); // in page 1 and 3
+  const [passdatax, setPassdatax] = useState("passed data x"); // in nestedchild 2 and 3
+
+    return (
+
+    // context rapper, . provodermeans it will provide data to the whole segment of components its wrapping
+    // when u create a provider u have to specife which state or variable or function u want to pass down
+    // under value attribute that takes in objects
+    // <Appcntxt.Provider value={{var1, fun1, state1, setstate1....}}>
+   
+    <div className="App">
+        <Appcntxt.Provider value={{ passdatax, setPassdatax }}>
+{/ passing "passdatax/setPassdatax" as as context to Nstd2chld and Nstd3chld /}
+
+          <Routes>
+          
+            <Route path="/Nstd3chld" element={<Nstd3chld />} />
+            <Route path="/Nstd2chld" element={<Nstd2chld />} />
+            <Route path="/Nstd1chld" element={<Nstd1chld />} />
+          
+             {/ --------------------------------------------------------------------------------------------------------------- /}
+            {/ passing "passdata/setPassdata" as as attribute props to page1 and page3 /}
+            <Route path="/" element={<Page1 passdata={passdata} />} />
+            <Route path="/pAge2" element={<Page2 />} />
+            <Route path="/pAge2/:id" element={<Page2 />} />
+            <Route
+              path="/pAge3"
+              element={<Page3 passdata={passdata} setPassdata={setPassdata} />}
+            />
+
+          </Routes>
+        </Appcntxt.Provider>
+    </div>
+///////////-------------------------------------------------------------------------------------------------------------//////////////////
+
+// page 1 n 3 to changepassdata.js for sending data as props
+//--------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------
+
+//              page1.js
+import React from "react"; // import this in all funct components
+
+// reciving "passdata" state as prop from app.js <page1 att1={}
+//in app.js:--  <Route path="/" element={<Page1 passdata={passdata} />} />
+
+const Page1 = (props) => {
+  // taking in the attribute prop-object and accessing its key value pair by props.passdata and display it in h1 tag
+  return (
+    <div>
+      <h1 style={{ color: "red" }}>test page 1 home</h1>;
+      <h1 style={{ background: "pink" }}>------------------</h1>;
+      <h2 style={{ background: "yellow" }}>
+        passed data: " {props.passdata} "
+      </h2>
+    </div>
+  ); // console.log("test compilation");
+};
+export default Page1;
+
+//--------------------------------------------------------------------------------------------
+
+//        page3.js
+import React from "react"; // import this in all funct components
+import Changepassdata from "./Changepassdata";
+// importing Changepassdata.js component to be used as component tag
+// <Changepassdata setPassdata={props.setPassdata} />
+// its same as passing attribute props in app.js but instead of
+// directly giving data to the component in app.js,
+// we doing it in another component like page3 here
+// and pass the prop it recieved to changepassdata component tag
+
+const Page3 = (props) => {
+  // reciving prop-object that contains both state props.passdata and its setstate method props.setpassdata
+  /    frm app.js:--  
+<Route
+path="/pAge3"
+element={<Page3 passdata={passdata} setPassdata={setPassdata} />}
+ />  /
+ return (
+  <div>
+    <h1 style={{ color: "red" }}>test page 3</h1>
+    <h1 style={{ background: "blue" }}>------------------</h1>
+    {/ displaying passed data by props.passdata /}
+    <h3>passed data: {props.passdata}</h3>
+    {/ this will render input tag and button on page3 returned frm changepassdata /}
+    <Changepassdata setPassdata={props.setPassdata} />
+    {/ note that we are not even using the props.setPassdata in page3 
+but passing it as another propattribute to changepassdata.js component, 
+changepassdata.js is not recieving any data directly frm app.js,
+page3 recieved attribute props frm app.js, props.passdata used above to display it
+while pros.setpassdata method is passed as attributeprop to changepassdata.js component 
+which will have inputbox and button to take in new data to assign as passdata
+ using props.setpassdata method we passed to it from page3 /}
+  </div>
+);
+};
+export default Page3;
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+//            changepassdata.js
+import React from "react"; // import this in all funct components
+import { useState } from "react";
+
+const Changepassdata = (props) => {
+  const [newpassdata, setNewpassdata] = useState("");
+  console.log(props);
+  return (
+    <div>
+      <h5 style={{ color: "red" }}>change passed data:- {props.passdata}</h5>;
+      <input
+        placeholder="change passed data"
+        onChange={(event) => {
+          setNewpassdata(event.target.value);
+        }}
+      ></input>
+      {newpassdata}
+      <button
+        onClick={() => {
+          props.setPassdata(newpassdata);
+        }}
+      >
+        update passed data
+      </button>
+    </div>
+  );
+};
+export default Changepassdata;
+
+/////////////////--------------------------------------------------------------------
+
+// nested 2 n 3 to changepassdata.js for sending data as props
+
+//------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------------------------------------------------
+
+//             nstd2chld.js
+
+import React from "react"; // import this in all funct components
+import Nstdprnt from "./Nstdprnt";
+import { useContext } from "react";
+import { Appcntxt } from "../App";
+// note, importing parent element in child with "../parent"
+
+// create context object in app.js get exported as global object frm parent component to all children components
+// its also acts as a wrapper omponent <appcntxt.provider value={{var1,fnct1,stat1...}}> which has multiple routes wrapped in it
+// now all those routes has access to value object
+//  these routes also gets value object which they import as appcntxt and use usecontexthook  extract these passed object variables n functions frm <appcntxt.provider value={{...}}> wrapper
+
+const Nstd2chld = () => {
+  const { passdatax } = useContext(Appcntxt);
+  return (
+    <div>
+      <Nstdprnt />
+      <h1>NESTED child2 page</h1>;
+      <h1 style={{ background: "pink" }}>nested child 2</h1>;
+      <h2 style={{ background: "yellow" }}>passed data: " {passdatax} "</h2>
+    </div>
+  );
+};
+export default Nstd2chld;
+
+//----------------------------------------------------------------------------------------------------
+
+//                       Nstd3chld.js
+import React from "react"; // import this in all funct components
+import Nstdprnt from "./Nstdprnt";
+import { useContext } from "react";
+import { Appcntxt } from "../App";
+import Changepassdatacntxt from "./Changepassdatacntxt";
+//   const {passdata, setPassdata}=useContext(Appcntxt)
+
+// create context object in app.js get exported as global object frm parent component to all children components
+// its also acts as a wrapper omponent <appcntxt.provider value={{var1,fnct1,stat1...}}> which has multiple routes wrapped in it
+// now all those routes has access to value object
+//  these routes also gets value object which they import as appcntxt and use usecontexthook  extract these passed object variables n functions frm <appcntxt.provider value={{...}}> wrapper
+
+const Nstd3chld = () => {
+  const { passdatax } = useContext(Appcntxt);
+
+  return (
+    <div>
+      <Nstdprnt />
+      <h1>NESTED child3 page</h1>;
+      <h1 style={{ background: "pink" }}>nested child 3</h1>;
+      <h3>passed data: {passdatax}</h3>
+      {/ this will render input tag and button on page3 returned frm changepassdata /}
+      <Changepassdatacntxt />
+    </div>
+  );
+};
+export default Nstd3chld;
+
+//------------------------------------------------------------------------------------------------------
+
+//                   Changepassdatacntxt.js
+
+import React from "react"; // import this in all funct components
+import { useState } from "react";
+import { useContext } from "react";
+import { Appcntxt } from "../App";
+//
+// create context object in app.js get exported as global object frm parent component to all children components
+// its also acts as a wrapper omponent <appcntxt.provider value={{var1,fnct1,stat1...}}> which has multiple routes wrapped in it
+// now all those routes has access to value object
+//  these routes also gets value object which they import as appcntxt and use usecontexthook  extract these passed object variables n functions frm <appcntxt.provider value={{...}}> wrapper
+
+const Changepassdatacntxt = (props) => {
+  const { passdatax, setPassdatax } = useContext(Appcntxt);
+  const [newpassdataa, setNewpassdataa] = useState("");
+  return (
+    <div>
+      <h5 style={{ color: "red" }}>change passed data:- {passdatax}</h5>;
+      <input
+        placeholder="change passed data"
+        onChange={(event) => {
+          setNewpassdataa(event.target.value);
+        }}
+      ></input>
+      {newpassdataa}
+      <button
+        onClick={() => {
+          setPassdatax(newpassdataa);
+        }}
+      >
+        update passed data
+      </button>
+    </div>
+  );
+};
+export default Changepassdatacntxt;
+*/
+////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+//                                  USEREDUCER HOOK
+//                                 ----------------------
+// It works very similer to  usestate but for large number of operations
+
+// program using both useState and useReducer hooks in React.
+// Let's create a counter application where you can increment and decrement
+// a counter value.
+
+// Setting up the initial state with useState
+
+// First, we'll create a component and set up the initial state using
+// the useState hook.
+
+// function Counter() {
+//   // Using useState to initialize counter with an initial value of 0
+//   const [count, setCount] = useState(0);
+
+//   return (
+//     <div>
+//       <h1>Counter: {count}</h1>
+//       <button onClick={() => setCount(count + 1)}>Increment</button>
+//       <button onClick={() => setCount(count - 1)}>Decrement</button>
+//     </div>
+//   );
+// }
+
+// export default Counter;
+
+// In this example, we're using useState to manage the count state. We have
+// two buttons that allow us to increment and decrement the count.
+
+//----------------------------------------------------------------------------------------------------------------------------------------------------
+
+//  Achieving the same functionality with useReducer
+
+// // Reducer function to handle state transitions
+// const counterReducer = (state, action) => {
+//   switch (action.type) {
+//     case "INCREMENT":
+//       return { count: state.count + 1 };
+//     case "DECREMENT":
+//       return { count: state.count - 1 };
+//     default:
+//       return state;
+//   }
+// }
+
+// function Counter() {
+//   // Using useReducer to initialize counter state and dispatch function
+//   const [state, dispatch] = useReducer(counterReducer, { count: 0 });
+// dispatch is basically setstate, count=0 stored in state which renders dats on screen by {state.count}
+//   return (
+//     <div>
+//       <h1>Counter: {state.count}</h1>
+//       <button onClick={() => dispatch({ type: "INCREMENT" })}>Increment</button>
+//       <button onClick={() => dispatch({ type: "DECREMENT" })}>Decrement</button>
+//     </div>
+//   );
+// }
+
+// export default Counter;
+
+// In this example, we've defined a counterReducer function to handle state
+// transitions based on action types. We use useReducer to initialize the state
+// and dispatch function. The dispatch function is used to dispatch actions to
+// modify the state.
+
+/*
+step-by-step explanation of how the reducer counter program above using the useReducer hook works:
+    Initialization: We start by importing React and the useReducer hook.
+    Reducer Function: We define a counterReducer function that takes two arguments: the current state and an action. This function specifies how the state should change based on the action.
+    Initial State: We set the initial state of our counter, { count: 0 }, which represents the counter's value.
+    Component Setup: Inside the Counter functional component, we use useReducer to initialize the state and the dispatch function. The state represents the current state of our counter.
+    Rendering: We render the current count value from the state using {state.count}.
+    Increment Action: When the "Increment" button is clicked, we call dispatch({ type: 'INCREMENT' }). This dispatches an action of type 'INCREMENT'.
+    Decrement Action: When the "Decrement" button is clicked, we call dispatch({ type: 'DECREMENT' }). This dispatches an action of type 'DECREMENT'.
+    Reducer Execution: Inside the counterReducer, the action type is checked. If it's 'INCREMENT', the count is increased by 1. If it's 'DECREMENT', the count is decreased by 1.
+    State Update: The reducer returns the new state, including the updated count.
+    Re-render: React automatically re-renders the component with the updated state, displaying the new count value.
+This program demonstrates how the useReducer hook simplifies state management and updates by centralizing state transitions based on dispatched actions.
+*/
+
+// Both examples achieve the same functionality of incrementing and decrementing
+// a counter value. However, the second example using useReducer is often preferred
+// for more complex state management scenarios, as it centralizes state transitions and can make the code easier to maintain as your application grows.
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// //             USEQUERY
+// //          ------------
+// // already imported above
+// // import Axios from "axios";
+// // import { useQuery } from "react-query";
+// //// USEQUERY  HOOK imported frm react query library
+// // https://catfact.ninja/fact api used with fact as key in recieved object and "catfact data"
+// const ReactQueryAxiosFetchTst = () => {
+//   const [dte, setDte] = useState(new Date().toString());
+//   setTimeout(() => {
+//     setDte(new Date().toLocaleString());
+//   }, 1000);
+
+//   // const {data} = useQuery(["cat"], ()=>{return Axios.get("https://catfact.ninja/fact").then((res) => res.data)})
+//   // note, "data" itself is the state variable here thats why we dont need to declear any setstate method (unlike usestate) in react query as "usequery" HOOK does state updation for us on each fetch
+//   const { data: catdata, isLoading, isError, refetch } = useQuery(
+//     // it takes an array and a callbck funct as arguments
+//     ["cat"], // array that stores all the previous state we can access by button onclick={refetch}
+//     () => {
+//       // callback funct for fetching data, react query is not a replacement for fetch/axeos, u have to fetch fata n give it to react query
+//       return Axios.get("https://catfact.ninja/fact").then((res) => res.data); // axios.get fetches the data and converts json to js object and we "return" that object to react query
+//     } // then block closed // now displaying the fetched data on screen, further info on data: catdata, isLoading, isError, refetch, scroll down at last
+//     /* can use async await arrow funct instead of simple arrow funct :--
+//     async () => {
+//       const res = await Axios.get("https://catfact.ninja/fact");
+//       return res.data;
+//     }  */
+//   ); // usequery closed
+//   // console.log(data);
+
+//   console.log(catdata);
+
+//   if (isLoading === true) {
+//     // Boolean so no need for===true
+//     return (
+//       <h1 style={{ color: "white", backgroundColor: "blue" }}>
+//         LOADING IN PROGESS.....
+//       </h1>
+//     );
+//   }
+
+//   if (isError) {
+//     return (
+//       <h1 style={{ color: "yellow", backgroundColor: "red" }}>ERROR :-( </h1>
+//     );
+//     // suppose wrong address or some other issue
+//     //"https://catfact.ninja/factz"
+//   }
+
+//   return (
+//     <div>
+//       <h4 style={{ color: "green" }}>{dte}</h4>
+
+//       <h2 style={{ color: "red" }}>
+//         {" "}
+//         ReactQueryAxiosFetchTst <br />
+//       </h2>
+
+//       <h1 style={{ color: "yellow", backgroundColor: "black " }}>
+//         {/* {data.fact} */}
+//         {/* when u refresh the page, it will break bcoz data doesnt exist
+//       until the query is done fetching the data so it wont be able to display null value in jsx so it
+//       will give dollowing error "data is undefined", if u cut and paste {data.fact} once, it will work just for demo,
+//        to handle this issue, one of the way is to put "?" question mark after data
+//        // {data?.fact} which basically will mean it wont execute on null object "data" to get data object ".fact" */}
+//         {/* {data?.fact}  */}
+//         {catdata?.fact}
+//       </h1>
+
+//       <button onClick={refetch}>refetch previous data</button>
+//     </div>
+//   );
+// };
+// export default ReactQueryAxiosFetchTst;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//                  CUSTOM HOOKS
+//                 --------------
+// import {nnnn} from "nnnn"; // import dependencies
+// const useCustomHook = (initialdefaultt = "xxxx") => {
+
+//   // LOGIC like "const [state,setstate]=useState("abcd")"
+
+//     return [/* xxxx, yyyy, zzzz, funct, state, setstate, "{}" */];
+//     // return { named retturn }
+//   };
+//   export default useCustomHook
+
+/*
+A custom hook in React is like a reusable tool you create to make your code
+ more organized and efficient. Imagine you have a set of tasks you often do 
+ in your app, like managing a piece of data or connecting to an external
+  service. Instead of repeating the same code in many places, you put that 
+  code in a custom hook. Then, whenever you need to do those tasks, you can 
+  use your custom hook, which saves you time and keeps your code tidy. 
+  Custom hooks follow a naming convention i.e. must start with "use" 
+  and can do almost everything a regular component can do, 
+  making your code easier to understand and maintain.
+
+A custom hook in React is a reusable JavaScript function that encapsulates common logic for components.  
+    Reusability: Custom hooks allow you to encapsulate and share component logic across multiple components.
+    Modularization: They promote cleaner, more modular code by separating logic from the UI components.
+    Naming Convention: Custom hooks should start with "use" (e.g., useCustomHook) to follow React's convention.
+    State and Effects: Custom hooks can manage state, side effects, and access context, just like regular components.
+    Composition: Hooks can be composed to create complex behaviors without code duplication.
+    Abstraction: They abstract complex logic into a single function, improving code readability.
+    Testing: Custom hooks can be tested independently, enhancing code maintainability.
+    Community Hooks: React's ecosystem offers many community-contributed custom hooks to solve common problems.
+    Clean Components: Using custom hooks reduces component complexity, making components simpler and easier to maintain.
+    Encapsulation: Custom hooks provide a way to encapsulate and share domain-specific logic across different parts of your application.
+*/
+//----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+
+//              TOGGLE CUSTOM HOOK
+//             --------------------
+
+// consider the following show/hide toggle button program
+// asically changing state of boolean true false of "show" state by button onClick={()=>{setShow(!show)}}
+// and conditionally rendering out {show&&<p>show/hide test</p>} based on value of show
+
+// export default function OtherStateHooks() {
+//   const [show, setShow] = useState(false);
+// console.log("show value: ",show)
+//   return (
+//     <div>
+//       <span style={{ backgroundColor: "red", color: "yellow" }}>CustomHook test</span><br />
+//       <button onClick={() => {setShow(!show)}}>{show ? "click to hide" : "click to show"}</button>
+//       {show && <p>show/hide test</p>}
+//     </div>
+//   );
+// }
+//----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+
+// // instead of doing like above, we can create a custom hook that will encapsulate all the toggle logic and we can just import it and use it like normal hook
+
+// // import useToggle frm "/xxxx"
+// export default function OtherStateHooks() {
+//   const [statexxxx, toggleyyyy] = useToggle(true); // default value false but we sent true
+//   const [statexxxx2, toggleyyyy2] = useToggle(true);
+
+//   console.log("show value 1 : ", statexxxx);
+//   console.log("show value 2 : ", statexxxx2);
+
+//   return (
+//     <div>
+//       <span style={{ backgroundColor: "red", color: "yellow" }}>
+//         CustomHook test
+//       </span>
+//       <br />
+//       <button onClick={toggleyyyy}>{statexxxx ? "click to hide" : "click to show"}</button>
+//       {statexxxx && <p>show/hide test</p>}<br />
+//       <button onClick={toggleyyyy2}>{statexxxx2 ? "click to hide" : "click to show"}</button>
+//       {statexxxx2 && <p>show/hide test</p>}
+//     {/* now both buttons working indipendently of each other using same hook */}
+//     </div>
+//   );
+// }
+
+// //---- creating a useToggle custom hook hook ------------------------------------------------------------------------------------------------------------
+// // must start with "use" for react to consider it a hook function
+// // states are created in highest level of app funct same rule applies for custom hook
+// // "initialdefaulttxy123=xxxx" will be default value to our customhook so if no value assigned when hook decleared in arent component, this "xxxx" will be default value
+// // now we create a funct called toggle in our custom hook coz repeating onClick={() => {setShow(!show)}}>{show ? "click to hide" : "click to show"}
+// // is making our code long espically when we have to use same logic again n again maybe with different multiple buttons
+// // instead we do this inside our customhook->   const toggle=()=>{setState(!state)}
+// // (toggle will act just like a callback funct in parent component that we will return frm custom hook)
+// // atlast we return, note, unlike funct/class components, u cannot return jsx frm a hook
+// // hooks are meant to deal with logic not ui logic so we can return functions n states but not jsx
+// // so we will return what we want to recieve on the other end in parent component
+// // so we return the toggle function and the state, we wont return "setstate" coz its already executing under toggle function inside our custom hook here
+// // u will recieve returned value in same sequence that u sent back frm here
+// // since its inside [array], if u send [state,toggle], u can recieve it as it as [statexxxx,toggleyyyy] but first destructured component will always be a state n second will be toggle funct
+// // (note, u can change name if sent as [array], if sent as {object}, it will act as named export n u will have to recieve it with same variable/funct name as prespecified, (example attributes in usequery or usecontext hook))
+
+// // import usestate frm "react"
+// const useToggle = (initialdefaultt = false) => {
+//   const [state, setState] = useState(initialdefaultt);
+
+//   const toggle = () => {
+//     setState(!state);
+//   };
+
+//   return [state, toggle];
+// };
+// // export default useToggle
+
+//---------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
+
+//                      CUSTOM REACT QUERY HOOK
+//                     -------------------------
+//---- creating a ReactQuery custom hook hook ------------------------------------------------------------------------------------------------------------
+
+// custom hook - creating a custom react query hook (look up reactqueryaxiosfetchtst.js in /pages or scroll up ctrl +f usequery above)
+
+// lets consider following program--->>
+
+// // // import usecatquery frm "/xxxx"
+// export default function OtherStateHooks() {
+//   const {catdata, isLoading, isError, refetchdata} = useCatQuery()
+
+//   if (isLoading === true) {
+//     // Boolean so no need for===true
+//     return (
+//       <h1 style={{ color: "white", backgroundColor: "blue" }}>
+//         LOADING IN PROGESS.....
+//       </h1>
+//     );
+//   }
+
+//   if (isError) {
+//     return (
+//       <h1 style={{ color: "yellow", backgroundColor: "red" }}>ERROR :-( </h1>
+//     );
+//     // suppose wrong address or some other issue
+//     //"https://catfact.ninja/factz"
+//   }
+
+//   return (
+//     <div>
+//       <span style={{ backgroundColor: "red", color: "yellow" }}>
+//        react query CustomHook test with cat api
+//       </span><br/>
+
+//       <h3 style={{backgroundColor:"blue", color:"yellow"}}>{catdata?.fact}</h3>
+//       <br />
+//       <button onClick={refetchdata}>refetch
+//        </button>
+//        <br />
+//     </div>
+//   );
+// }
+
+// //---- creating a ReactQuery custom hook hook ------------------------------------------------------------------------------------------------------------
+// // import usestate frm "react"
+// // import Axios from "axios";
+// // import { useQuery } from "react-query";
+// const useCatQuery = (initialdefaultt = '') => {
+
+//   // const {data} = useQuery(["cat"], ()=>{return Axios.get("https://catfact.ninja/fact").then((res) => res.data)})
+//   // note, "data" itself is the state variable here thats why we dont need to declear any setstate method (unlike usestate) in react query as "usequery" HOOK does state updation for us on each fetch
+//   const { data: catdata, isLoading, isError, refetch } = useQuery(
+//     // it takes an array and a callbck funct as arguments
+//     ["cat"], // array that stores all the previous state we can access by button onclick={refetch}
+//     () => {
+//       // callback funct for fetching data, react query is not a replacement for fetch/axeos, u have to fetch fata n give it to react query
+//       return Axios.get("https://catfact.ninja/fact").then((res) => res.data); // axios.get fetches the data and converts json to js object and we "return" that object to react query
+//     } // then block closed // now displaying the fetched data on screen, further info on data: catdata, isLoading, isError, refetch, scroll down at last
+
+//   ); // usequery closed
+//   // console.log(data);
+
+// //   const refetchdata=()=>{
+// // if(refetch){
+// //   // alert("data refetched")
+// //   console.log("data refetched")
+// //   refetch() // invoking refetch so when this arg-refetchdata funct called in parent, it executes refetch operation n also creates an alert
+// // }
+// //   }
+// const refetchdata=()=>{
+
+//     // alert("data refetched")
+//     console.log("data refetched")
+//     refetch() // invoking refetch so when this arg-refetchdata funct called in parent, it executes refetch operation n also creates an alert
+
+//     }
+//   console.log(catdata);
+//    // return [catdata, isLoading, isError, refetch ]; // lets send data as obj{} instead of array[]
+// return {catdata, isLoading, isError, refetchdata}
+// };
+// // export default useCatQuery
+
+//---------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
+
+//                  CUSTOM COUNTER HOOK
+//                 ---------------------
+
+// // // import useCounter frm "/xxxx"
+// export default function OtherStateHooks() {
+//   const { count, incriment, decriment, reset } = useCounter();
+//   return (
+//     <div>
+//       <span style={{ backgroundColor: "red", color: "yellow" }}>
+//         COUNTER APP
+//       </span>
+//       <br />
+
+//       <h3 style={{ backgroundColor: "blue", color: "yellow" }}>xxxx</h3>
+//       <br />
+//       <h1>{count}</h1>
+//       <button onClick={incriment}>+</button>
+//       <button onClick={decriment}>-</button>
+//       <button onClick={reset}>0</button>
+
+//       <br />
+//     </div>
+//   );
+// }
+
+// //---- creating a ReactQuery custom hook hook ------------------------------------------------------------------------------------------------------------
+// // import usestate frm "react"
+// const useCounter = (initialdefaultt = 0) => {
+//   const [count, setCount] = useState(initialdefaultt);
+
+//   const incriment = () => {
+//     setCount(count + 1);
+//   };
+//   const decriment = () => {
+//     setCount(count - 1);
+//   };
+//   const reset = () => {
+//     setCount(0);
+//   };
+
+//   return { count, incriment, decriment, reset };
+// };
+// // export default useCounter
+
+//---------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
+
+//                  CUSTOM USE STATE TO CONSOLE.LOG CHANGE IN ANY STATE VALUE
+//                 ------------------------------------------------------------
+
+// // import useLogState frm "/xxxx"
+export default function OtherStateHooks() {
+  const [dta, setDta] = useLogState();
+  return (
+    <div>
+      <span style={{ backgroundColor: "red", color: "yellow" }}>
+        console.log any change in state
+      </span>
+      <br />
+      <input
+        onChange={(event) => {
+          setDta(event.target.value);
+        }}
+      />
+      <br />
+      <span style={{ backgroundColor: "blue", color: "yellow" }}>{dta}</span>
+      <br />
+      <br />
+    </div>
+  );
+}
+
+// import usestate frm "react"
+const useLogState = (initialdefaultt = "") => {
+  const [dta, setDta] = useState(initialdefaultt);
+  useEffect(() => {
+    console.log(dta);
+  }, [dta]); // useeffect will track any change in dta dependency
+  return [dta, setDta];
+};
+// export default useLogState
+
+//
+//---------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------
+
+//                  CUSTOM USE STATE TO SAVE IN MEMORY
+//                 -------------------------------------
+
+// // import useLocalStorageState frm "/useLocalStorageState"
+
+// function MyComponent() {
+//   const [name, setName] = useLocalStorageState('name', 'John');
+
+//   return (
+//     <div>
+//       <input
+//         type="text"
+//         value={name}
+//         onChange={(e) => setName(e.target.value)}
+//       />
+//       <p>Hello, {name}!</p>
+//     </div>
+//   );
+// }
+
+// export default MyComponent;
+
+//  //--------------------------------------------------------------------------------------------
+
+//  // import {useState} frm "react"
+// function useLocalStorageState(key, initialValue) {
+//   // Retrieve the stored value from localStorage
+//   const storedValue = localStorage.getItem(key);
+
+//   // Initialize state with the stored value or the initial value
+//   const [value, setValue] = useState(storedValue ? JSON.parse(storedValue) : initialValue);
+
+//   // Update the localStorage value whenever state changes
+//   const setLocalStorageValue = (newValue) => {
+//     setValue(newValue);
+//     localStorage.setItem(key, JSON.stringify(newValue));
+//   };
+
+//   return [value, setLocalStorageValue];
+// }
+// // export default useLocalStorageState
+
+// //
+
+/* 
+ step-by-step breakdown of the custom hook and its usage:
+
+    Import Dependencies: 
+    Import useState from React.
+    
+    Create the Custom Hook: 
+    Define useLocalStorageState as a function that takes a key and an initialValue.
+    
+    Retrieve Stored Value:
+Get the stored value from localStorage using the provided key.
+    
+ Initialize State:
+  Use useState to create a state variable value. Initialize it with the stored value or the initialValue if no stored value exists.
+
+Set Local Storage Value: 
+Define a function setLocalStorageValue to update the state and store it in localStorage.
+    
+Return Hook Values: 
+Return [value, setLocalStorageValue] as an array from the custom hook.
+
+Using the Custom Hook: 
+Import and use useLocalStorageState in your component.
+
+Initialize State in the Component: 
+Create a state variable name using the custom hook, providing a key ('name') and an initialValue ('John').
+    
+Render Input Element: 
+Render an input element with a value of name.
+
+Handle Input Changes: 
+Use the setName function to update the name state when the input changes.
+
+Display Greeting: 
+Display a greeting message using the name state.
+
+User Interaction: 
+When a user enters a name in the input field, it triggers the setName function.
+
+State Update: 
+The setName function updates the name state and stores it in localStorage.
+
+Persistence: 
+The entered name is now persistent across page reloads due to localStorage.
+
+Component Output: 
+The component renders with the updated name, providing a seamless user experience.
+ 
+
+
+localStorage API. Here's how it works step by step:
+
+    Retrieving Data (localStorage.getItem(key)):
+        localStorage.getItem(key) is used to retrieve data stored in the browser's localStorage.
+        key is a unique identifier used to store and retrieve specific data.
+        When you call localStorage.getItem(key), it searches for data associated with the provided key.
+
+    Conditional Check (const [value, setValue] = useState(storedValue ? JSON.parse(storedValue) : initialValue)):
+        storedValue is assigned the result of localStorage.getItem(key). It attempts to retrieve any previously stored data for the given key.
+        If data exists for the key, storedValue will contain the stored data as a string. If not, it will be null or undefined.
+
+    Parsing Data (JSON.parse(storedValue))
+        To use the retrieved data, you need to parse it because localStorage stores data as strings.
+        JSON.parse(storedValue) is used to parse the stored string back into its original JavaScript object or value.
+
+    Setting Initial State (const [value, setValue] = useState(...))
+        useState initializes a state variable value with the parsed storedValue if it exists. If not, it uses the provided initialValue.
+        This sets up your component's initial state with the value retrieved from localStorage or the default value if no data is found.
+
+Overall, this pattern allows you to persist data between page loads by storing it in the browser's localStorage. When the page is refreshed or revisited, the data is retrieved and used to initialize the component's state, providing a seamless user experience
+
+*/
+
+/////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

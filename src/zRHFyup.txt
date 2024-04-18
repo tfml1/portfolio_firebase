@@ -1,0 +1,331 @@
+import React from "react";
+import { useForm } from "react-hook-form";
+import * as Yup from "yup"; // * means all
+import { yupResolver } from "@hookform/resolvers/yup";
+
+const Formstst = () => {
+  const schemaX = Yup.object().shape({
+    fullname: Yup.string().required("give ur full name, cant skip it"), //.required makes it compulsary field
+    mailid: Yup.string().email().required("give a valid mail id"),
+    age: Yup.number().positive().min(18).max(100).required(),
+    phno: Yup.string(), // no .required so optional // note, adding any condition like.min/max etc or making it a "number" like "age" instead of string doesnt seem to work unless its "required" so no condition check for optional input
+    pswd: Yup.string().min(5).max(10).required(),
+    cnfpswd: Yup.string()
+      .oneOf([Yup.ref("pswd"), null])
+      .required(" confirm password must be same as password")
+    // note, the keys here (fullname/mailid/age/pswd/cnfpswd) must be same as that of register in input box
+    // <input type="text"  {...register("fullname/mailid/age/pswd/cnfpswd")} />
+  });
+
+  /*
+  const { register, handleSubmit, getValues } = useForm();
+*/
+
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { errors }
+  } = useForm({
+    resolver: yupResolver(schemaX)
+  });
+
+  /*
+        const { register, handleSubmit, getValues } = useForm();
+    */
+
+  const onSubmitx = () => {
+    const formDatax = getValues(); // Access the form data as object n saved in formdatax variable
+    console.log(formDatax);
+  };
+
+  return (
+    <div>
+      <h1 style={{ color: "red" }}>forms page</h1>;
+      <form onSubmit={handleSubmit(onSubmitx)}>
+        name <input type="text" placeholder="name" {...register("fullname")} />
+        <p className="formerror">{errors.fullname?.message}</p>
+        <br />
+        email <input type="text" placeholder="email" {...register("mailid")} />
+        <p className="formerror">{errors.mailid?.message}</p>
+        <br />
+        age <input type="number" placeholder="age" {...register("age")} />
+        <p className="formerror">{errors.age?.message}</p>
+        <br />
+        ph# <input type="text" placeholder="phone #" {...register("phno")} />
+        <br />
+        <br />
+        password
+        <input type="password" placeholder="password" {...register("pswd")} />
+        <p className="formerror">{errors.pswd?.message}</p>
+        <br />
+        confirm password
+        <input
+          type="password"
+          placeholder="confirm password"
+          {...register("cnfpswd")}
+        />
+        <p className="formerror">{errors.cnfpswd?.message}</p>
+        <br />
+        <input type="submit" />
+        <br />
+      </form>
+    </div>
+  );
+};
+export default Formstst;
+/*
+
+
+
+
+//              REACT-HOOK-FORM
+} 
+*/
+// we are using USEFORM HOOK with YUP for validation
+// lets create a form with multiple inputs
+// <form><input type="" /></form>
+// now we wanna control what we write on these inputs
+// so we dont send wrong data like string for numbers etx
+// so we need to validate and give error msg on wrong input
+// npm install react-hook-form and npminstall yup
+// react hook form will gib us all the functionality related
+// to submitting the form, error etx while yup will be used for validation of input data
+// import {useForm} from "react-hook-form"
+// const {register, handleSubmit, getValues}=useForm()
+// get values self explainatory, it takes valued frm the form as an object (with ...reg:"xxx" as keys to the object)
+// we take in or destructure useform hook and get "register" and "handlesubmit" inbuilt functons frm the hook
+// register- its a way to insert an input inside a form to be part of validation we are creating
+// so the register will be used in all the inputs that need to be part of validation as {...register(nametoidentifythefield)}
+// handlesubmitt will be called every time the form is submitted by submit button
+// handlesubmit will handle all operation prior to submitting
+// now we create a user defined onsubmitx function that will be passed  in attribute onsubmit  <form onsubmit={handlesubmit(onsubmitx)}>
+// note, "onsubmit" and "onsubmitx" is different
+// onSubmit: form attribute that Specifies a function to be executed when the form is submitted.
+// onsubmitx user created funct that will handle the code that will execute on handlesubmit submits the form
+//  <form onSubmit={handleSubmit(onSubmitx)}>
+//
+//// register- its a way to insert an input inside a form to be part of validation we are creating
+// so the register will be used in all the inputs that need to be part of validation as {...register(nametoidentifythefield)}
+// <input type="text" placeholder="name" {...register("fullname")} /><br/>
+// all the data we get frm this form will be in a form of object
+/*
+{
+fullname:"jghghg",
+email:"hfhfhfg",
+age:"jggghhg",
+pswd:"hghghghg"
+confpswd:"ffgfgfgfg"
+}
+so the register function determines the "key" like "fullname", "age" etc in this object
+*/
+// now to see it working, in onsubmitx funct, we use {GETVALUE} 3rd destructured function from useForm() hook and store it in a variable "formdatax", it will save as objects with {...reg("fullname")} as keys, then console.log the formdatax variable  console.log(formdatax)
+// passing  some data and click submit button, on console.log, we get-->>
+/*
+  const onSubmitx = () => {
+    const formDatax = getValues(); //getValues will Access the form data as object n saved in formdatax variable
+    console.log(formDatax);
+  };
+
+  op:--  Object { fullname: "bbnbnb", mailid: "bbb", age: "n", pswd: "u", cnfpswd: "y" }
+ 
+ // if u suppose try to pass onsubmitx(dta) console.log(dta)
+ Object { name: "fullname", onChange: async te(e), onBlur: async te(e), ref: ref(s) }
+means {chatgpt}=>(The register function from react-hook-form returns a reference object for each input field, not the form data)
+  */
+//
+
+// now we created form, that form needs some logic for validation of entered dats b4 submitting, for that, we create a scheme or schema for our form and integrate that scheme to our form resolver
+// so we createa tup schema that will take in form data and validate input entries
+//
+
+//          YUP
+//  form data needs validation for its fields
+// npm install yup, import * as Yup from "yup" // "*" means all
+// we want to use the yup to generate the shape of what our form will look like or a scheme for inputs
+//  so we create a "schema", a schema is the  logic that defines the shape of data it takes as input
+// lets create schemaX (hooks n everything used in funct must be decleared inside funct)
+// schemaX=Yup.manyFnctns after dot, there are many kinds of schema functions to choose frm like boolean, array , date, mix, number, obj etx, we choose yup.object()
+// after yup.object().manyFncts after dot among many functions, we choose .shape({})
+// inside shape({....}) we create our scheme or schema logic for the inputs
+/*  const schemaX=Yup.object().shape({
+  // using method chaining means each funct1().funct2()... will execute one after another on condition check
+      fullname: Yup.string().required(), // .REQUIRED makes it compulsary field
+      // check if fullname is string and .REQUIRED makes it compulsary field
+      mailid: Yup.string().email().required(),
+      // check if mailid is string then if its in email format(inbuilt) then making it required field
+      age:Yup.number().positive().min(18).max(100).required(),
+      // check if age is a number(cant be decimal age), if its +ve(cant be -ve age), minimum 18 maximum 100, then making required field 
+      phno:Yup.number().positive().min(10).max(10), // no .required so optional
+ // no .required so optional // note, adding any condition like.min/max etc or making it a "number" like "age"
+ // instead of string doesnt seem to work unless its "required" so no condition check for optional input
+      pswd:Yup.string().min(5).max(10).required(),
+      // check id password a string frm 5 to 10 char
+      cnfpswd:Yup.string().oneOf([Yup.ref("pswd"), null])
+// now we need to check if confirmed password same as password
+// first we check if string, min max no need to check as already we doing equality check
+// by .oneOf([Yup.ref("pswd")]) means cnfpswd key value must be "oneOf" or equal to yup."reference" ("pswd") pswd password value
+// the "ref" provide reference to other key element values of the yup schema encaptulated block
+// null means this is the only value reference u need
+    })
+    // note, the keys(fullname/mailid/age/pswd/cnfpswd) must be same as that of register in input box
+// <input type="text"  {...register("fullname/mailid/age/pswd/cnfpswd")} />
+    */
+// integration bw yup schema and react hook form
+// we need to pass a resolver in useForm({}) hook decleration
+// for that we need yupresolver to be passed as value for key
+// resolver but it  needs to be installed first then imported
+// npm install "@hookform/resolvers
+// import { yupResolver } from "@hookform/resolvers/yup";
+// after @hookform/resolvers slash /manyoptions choose yup
+// now u can pass the imported resolver as yupresolver(schemax)
+// means our yup schema "schemax" is passed in the yup resolver
+// which in total{yupResolver(schemaX)} serves as value for useform hook "resolver"
+/*
+const { register, handleSubmit, getValues } = useForm({
+    resolver: yupResolver(schemaX)
+  });
+*/
+// now its fully working but when user gives wrong input n its not submitting
+// there is no error message for guidence  so for that
+/*
+// we add another feild in destructuring called formstate that takes an {error} obj value -->> "formstate":"{error}" 
+   const { register, handleSubmit, getValues, formState:{errors} } = useForm({
+    resolver: yupResolver(schemaX)
+  });
+
+  then we add a para tag with a classname(for css) after input in jsx to fisplay the error
+  <form onSubmit={handleSubmit(onSubmitx)}>
+         name <input type="text" placeholder="name" {...register("fullname")} />
+        <p className="formerror" className="formerror" >{errors.fullname?.message}</p> 
+        <br />
+
+        email <input type="text" placeholder="email" {...register("mailid")} />
+        <p className="formerror">{errors.mailid?.message}</p>
+        <br />
+        age <input type="number" placeholder="age" {...register("age")} />
+        <p className="formerror">{errors.age?.message}</p>
+     
+        <.........for the rest of the fields same
+
+here, {errors.fullname?.message} means "error" in "fullname" if generated "?" then display error message ".message"
+// so if there is no message, no message displayed but iferror generated, ? condition true n error displayed
+        // note, error.xxxx must be same as the keys (fullname/mailid/age/pswd/cnfpswd)
+// now error message disply working :-)
+// but its computer generated like
+"cnfpswd must be one of the following values: Ref(pswd), "
+"fullname is a required field" "mailid must be a valid email" etx
+it doesnt look good
+so we can customise the error returned in "yup schema" block by passing our message in .required("xxxxx")
+// here we only changed for name, mail and conf pswrd
+// age n password err msg looks fine so we leave it like that or u can change if u like
+like-->>
+
+    fullname: Yup.string().required("give ur full name, cant skip it"),
+    mailid: Yup.string().email().required("give a valid mail id"),
+    age: Yup.number().positive().min(18).max(100).required(),
+    phno: Yup.string(), 
+    pswd: Yup.string().min(5).max(10).required(),
+    cnfpswd: Yup.string().oneOf([Yup.ref("pswd"), null]).required("confirm password must be same as password")
+
+        */
+/* // in style.css, we can use the given class for making it red
+.formerror{
+  color: red;
+}
+*/
+///////chatgpt/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*  .oneOf([Yup.ref("pswd")]) and useForm({ resolver: yupResolver(schemaX) })
+   --------------------------------------------------------------------------
+! Let's break down .oneOf([Yup.ref("pswd")]) and useForm({ resolver: yupResolver(schemaX) }) separately.
+.oneOf([Yup.ref("pswd")]) Explanation:
+
+In your code, .oneOf([Yup.ref("pswd")]) is used in the Yup schema for the "cnfpswd" field. This part of the schema is responsible for checking if the "cnfpswd" field matches the "pswd" field, which typically represents the password.
+
+Here's what it means step by step:
+
+    .oneOf: This is a Yup validation function that checks if the value of the field it's applied to is one of the specified values in the array.
+
+    [Yup.ref("pswd")]: Inside the .oneOf function, you provide an array of values to compare against. In this case, [Yup.ref("pswd")] is used. Yup.ref("pswd") is a reference to the "pswd" field in the schema. So, .oneOf checks if the value of "cnfpswd" is equal to the value of "pswd" (the password field).
+
+    null: The null value is included in the array of values. This means that if "cnfpswd" is empty (null), it's also considered valid. In other words, if the user leaves the "confirm password" field empty, it won't trigger a validation error for this specific check.
+
+Overall, .oneOf([Yup.ref("pswd"), null]) ensures that the "cnfpswd" field must either match the "pswd" field or be left empty (null) to pass this specific validation check. It's commonly used for password confirmation fields to ensure that the user enters the same password twice.
+useForm({ resolver: yupResolver(schemaX) }) Explanation:
+
+The useForm hook is a fundamental part of React Hook Form, and it's used to manage form-related logic. In your code, you're configuring it with the resolver option set to yupResolver(schemaX).
+
+Here's what this part does:
+
+    useForm: This hook initializes the form logic. It provides various functions and objects that allow you to manage form state, handle submissions, and interact with form inputs.
+
+    { resolver: yupResolver(schemaX) }: Within the useForm hook, you provide an options object. In this object, the resolver option is set to yupResolver(schemaX). This option is crucial for integrating Yup validation with React Hook Form.
+
+    yupResolver(schemaX): yupResolver is a function provided by the @hookform/resolvers/yup package. It takes your Yup schema (schemaX) as an argument. This resolver connects the Yup schema with React Hook Form, enabling it to validate form data against the defined schema.
+
+In essence, by configuring useForm with yupResolver(schemaX), you're telling React Hook Form to use the Yup schema you defined (schemaX) to validate your form's input fields. This integration ensures that your form data is validated according to the rules specified in your Yup schema, and any validation errors are accessible through the errors object in the form's state.
+
+*/
+
+//--------------chatgpt explaination for rest of the code-----------------------------------------------------------------------------------------------------------------------------
+/*
+    Import Dependencies: Import the required libraries including React, useForm from react-hook-form, Yup for schema validation, and yupResolver from @hookform/resolvers/yup.
+
+    Create Yup Schema: Define a Yup schema (schemaX) that outlines the validation rules for each form field.
+
+    Validation Rules: Define validation rules for each field. For example, "fullname" is required and should be a string. Use .required("message") to set a custom error message.
+
+    Initialize useForm Hook: Initialize form methods using the useForm hook, including register, handleSubmit, getValues, and now formState.errors.
+
+    YupResolver Integration: Use the yupResolver to connect the Yup schema to the form using the resolver option in useForm.
+
+    Create onSubmitx Function: Define an onSubmitx function, which will be called when the form is submitted. This function uses getValues to retrieve form data.
+
+    Form Rendering: Render the form structure using JSX, including input fields for "name," "email," "age," "phno," "password," and "confirm password."
+
+    Input Fields with Registration: For each input field, add the register function, connecting the input to the form validation logic. Use spread attributes ({...register("fieldname")}) with "fieldname" corresponding to keys in the Yup schema.
+
+    Custom Error Messages: Display custom error messages next to input fields. Use {errors.fieldname?.message} to show the custom error message when validation fails.
+
+    Optional Field (phno): Note that the "phno" field is marked as optional in the Yup schema, meaning it doesn't have to meet any specific validation criteria.
+
+    Confirm Password Validation: The "cnfpswd" field is used to confirm the password. In the Yup schema, it's validated to ensure it matches the "pswd" field using .oneOf([Yup.ref("pswd"), null]).
+
+    Form Submission: Add a submit button within the form. On form submission, the handleSubmit function is triggered.
+
+    handleSubmit Function: When the form is submitted, the handleSubmit function is called, which, in turn, calls your onSubmitx function.
+
+    onSubmitx Function: Inside onSubmitx, use getValues to retrieve the form data, which includes all the fields specified in the Yup schema.
+
+    Yup Validation: Yup schema validation is applied to the form data as part of the form submission process. Any validation rule violations will throw an error with the custom error messages.
+
+    Console Logging Form Data: Log the form data (an object with field names as keys and values as values) to the console. This demonstrates that the form values are successfully captured.
+
+    Form Validation Errors: If any validation rules aren't met (e.g., required fields left empty or incorrect email format), Yup validation will prevent form submission, and an error message will be displayed next to the respective input fields.
+
+    Styling Error Messages: To style the error messages, use CSS to give the .formerror class a red color (as an example).
+
+    Optional Field (phno): As "phno" is an optional field, it doesn't display an error message if left empty, as specified in the Yup schema.
+
+    Improved Error Messages: Customized error messages are now displayed for "fullname," "mailid," and "cnfpswd," providing better guidance to users.
+
+    Optional Field Clarification: The "phno" field serves as an example of an optional field without strict validation.
+
+    Confirm Password Validation (cnfpswd): The oneOf function is used to check if the "cnfpswd" field is one of the following values: Yup reference ("pswd") or null. This means "cnfpswd" must match the "pswd" field or be empty (null).
+
+    Using Custom Error Messages: The .required("message") function is used in Yup validation to set custom error messages. For example, "fullname" has a custom error message that tells the user to provide their full name.
+
+    Form Styling: Add CSS styling to format the form and error messages as desired.
+
+    Red Error Messages: The CSS class .formerror is used to make the error messages appear in red.
+
+    Optional Field Explanation: Clarify that optional fields like "phno" do not require strict validation, but they can still be validated if needed.
+
+    Custom Error Messages Explanation: Explain that custom error messages can be set in Yup validation rules using .required("message") for better user guidance.
+
+    Confirm Password Validation Explanation: Describe how oneOf([Yup.ref("pswd"), null]) is used to check if "cnfpswd" matches "pswd" or is empty (null).
+
+    useForm Explanation: Discuss the importance of the useForm hook and how it's integrated with yupResolver to handle form validation.
+
+    YupResolver Explanation: Explain that yupResolver connects the Yup schema with the form validation logic, allowing for custom error messages and strict validation rules
+*/
